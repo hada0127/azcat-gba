@@ -13,8 +13,8 @@
 /* ── 화면 / 레이아웃 ── */
 #define SCREEN_W            240
 #define SCREEN_H            160
-#define HUD_H               16
-#define GAME_AREA_H         (SCREEN_H - HUD_H)
+#define HUD_HEIGHT               16
+#define GAME_AREA_H         (SCREEN_H - HUD_HEIGHT)
 
 /* ── 플레이어 ── */
 #define PLAYER_INIT_X       FP(108)

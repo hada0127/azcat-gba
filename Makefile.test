@@ -7,10 +7,10 @@ UNITY_SRC = test/unity/unity.c
 TEST_SRCS = test/test_main.c test/test_types.c test/test_difficulty.c \
             test/test_grade.c test/test_collision.c test/test_bomb.c \
             test/test_player.c test/test_item.c test/test_cat.c \
-            test/test_game.c
+            test/test_game.c test/test_hud.c test/test_gameover.c
 GAME_SRCS = source/difficulty.c source/grade.c source/collision.c \
             source/bomb.c source/player.c source/item.c source/cat.c \
-            source/game.c
+            source/game.c source/hud.c source/gameover.c
 
 TARGET = test_runner.exe
 
