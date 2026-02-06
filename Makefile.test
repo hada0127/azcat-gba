@@ -4,9 +4,13 @@ CFLAGS = -Wall -Wextra -std=c99 -Iinclude -Itest/unity -Itest/stubs
 LDFLAGS =
 
 UNITY_SRC = test/unity/unity.c
-TEST_SRCS = test/test_main.c test/test_types.c
-# 게임 소스 (테스트 대상) - 모듈 추가시 여기에 추가
-GAME_SRCS =
+TEST_SRCS = test/test_main.c test/test_types.c test/test_difficulty.c \
+            test/test_grade.c test/test_collision.c test/test_bomb.c \
+            test/test_player.c test/test_item.c test/test_cat.c \
+            test/test_game.c
+GAME_SRCS = source/difficulty.c source/grade.c source/collision.c \
+            source/bomb.c source/player.c source/item.c source/cat.c \
+            source/game.c
 
 TARGET = test_runner.exe
 
