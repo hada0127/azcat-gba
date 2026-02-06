@@ -1,0 +1,22 @@
+# PC 테스트 빌드 (MinGW gcc)
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c99 -Iinclude -Itest/unity -Itest/stubs
+LDFLAGS =
+
+UNITY_SRC = test/unity/unity.c
+TEST_SRCS = test/test_main.c test/test_types.c
+# 게임 소스 (테스트 대상) - 모듈 추가시 여기에 추가
+GAME_SRCS =
+
+TARGET = test_runner.exe
+
+all: $(TARGET)
+	./$(TARGET)
+
+$(TARGET): $(UNITY_SRC) $(TEST_SRCS) $(GAME_SRCS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+clean:
+	rm -f $(TARGET)
+
+.PHONY: all clean

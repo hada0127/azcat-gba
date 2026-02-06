@@ -16,6 +16,10 @@ Thumbs.db
 .DS_Store
 nul
 
+# Test build
+test_runner.exe
+test_runner
+
 # Editor
 *.swp
 *.swo
