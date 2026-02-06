@@ -12,6 +12,8 @@ extern int run_cat_tests(void);
 extern int run_game_tests(void);
 extern int run_hud_tests(void);
 extern int run_gameover_tests(void);
+extern int run_save_tests(void);
+extern int run_sound_tests(void);
 
 int main(void) {
     int failures = 0;
@@ -29,6 +31,8 @@ int main(void) {
     failures += run_game_tests();
     failures += run_hud_tests();
     failures += run_gameover_tests();
+    failures += run_save_tests();
+    failures += run_sound_tests();
 
     printf("=== Total Failures: %d ===\n", failures);
     return failures ? 1 : 0;
