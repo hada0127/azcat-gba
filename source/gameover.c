@@ -1,6 +1,5 @@
 #include "gameover.h"
 #include "grade.h"
-#include "gba_stubs.h"
 
 void gameover_init(GameOverResult* result, s16 score, s16 hiscore) {
     result->grade_index = grade_get_index((u16)score);

@@ -1,5 +1,4 @@
 #include "player.h"
-#include "gba_stubs.h"
 
 void player_init(Player* p) {
     p->x = PLAYER_INIT_X;

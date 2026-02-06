@@ -1,6 +1,5 @@
 #include "game.h"
 #include "difficulty.h"
-#include "gba_stubs.h"
 
 void game_init(GameState* gs) {
     gs->state = STATE_TITLE;

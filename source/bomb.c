@@ -1,5 +1,4 @@
 #include "bomb.h"
-#include "gba_stubs.h"
 
 void bomb_init(Bomb* b) {
     b->have = 0;
