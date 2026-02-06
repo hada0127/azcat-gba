@@ -12,15 +12,14 @@ void test_cats_init(void) {
     }
 }
 
-void test_cats_no_spawn_at_zero(void) {
+void test_cats_spawn_at_zero(void) {
+    srand(42);
     cats_init(cats);
     s16 score_add = 0;
-    /* score=0 → cat_qty=0 */
-    cats_update(cats, 0, FP(100), false, &score_add);
-    int i;
-    for (i = 0; i < MAX_CATS; i++) {
-        TEST_ASSERT_EQUAL_INT(CAT_STATE_INACTIVE, cats[i].state);
-    }
+    /* score=0 → cat_qty=1 (최소 1마리 보장) */
+    cats_update(cats, 0, FP(-100), false, &score_add);
+    TEST_ASSERT_EQUAL_INT(CAT_STATE_FALLING, cats[0].state);
+    TEST_ASSERT_EQUAL_INT(CAT_STATE_INACTIVE, cats[1].state);
 }
 
 void test_cats_spawn_at_score2(void) {
@@ -157,7 +156,7 @@ void test_cats_inactive_above_qty(void) {
 int run_cat_tests(void) {
     UNITY_BEGIN();
     RUN_TEST(test_cats_init);
-    RUN_TEST(test_cats_no_spawn_at_zero);
+    RUN_TEST(test_cats_spawn_at_zero);
     RUN_TEST(test_cats_spawn_at_score2);
     RUN_TEST(test_cats_fall);
     RUN_TEST(test_cats_land_gives_score);

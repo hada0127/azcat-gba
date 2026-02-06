@@ -7,6 +7,7 @@ void player_init(Player* p) {
     p->direction = DIR_LEFT;
     p->life = PLAYER_LIFE_INIT;
     p->state = 0;
+    p->anim_counter = 0;
 }
 
 void player_update(Player* p, u16 keys_held, bool bomb_active) {
@@ -21,13 +22,16 @@ void player_update(Player* p, u16 keys_held, bool bomb_active) {
         p->direction = DIR_LEFT;
         p->x -= speed;
         p->v_accel += PLAYER_ACCEL_INC;
+        p->anim_counter++;
     } else if (keys_held & KEY_RIGHT) {
         p->direction = DIR_RIGHT;
         p->x += speed;
         p->v_accel += PLAYER_ACCEL_INC;
+        p->anim_counter++;
     } else {
         /* 키를 떼면 즉시 정지, 가속도 리셋 */
         p->v_accel = 0;
+        p->anim_counter = 0;
     }
 
     /* X 클램핑 */

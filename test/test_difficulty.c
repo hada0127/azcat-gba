@@ -2,8 +2,8 @@
 #include "../source/difficulty.h"
 
 void test_cat_qty_zero_at_start(void) {
-    TEST_ASSERT_EQUAL_INT(0, difficulty_get_cat_qty(0));
-    TEST_ASSERT_EQUAL_INT(0, difficulty_get_cat_qty(1));
+    TEST_ASSERT_EQUAL_INT(1, difficulty_get_cat_qty(0));
+    TEST_ASSERT_EQUAL_INT(1, difficulty_get_cat_qty(1));
 }
 
 void test_cat_qty_low_scores(void) {
@@ -37,7 +37,7 @@ void test_cat_qty_max(void) {
 
 void test_cat_qty_boundary_exact(void) {
     /* score > threshold 방식이므로 threshold 자체는 이전 단계 */
-    TEST_ASSERT_EQUAL_INT(0, difficulty_get_cat_qty(1));
+    TEST_ASSERT_EQUAL_INT(1, difficulty_get_cat_qty(1));
     TEST_ASSERT_EQUAL_INT(1, difficulty_get_cat_qty(2));
     TEST_ASSERT_EQUAL_INT(4, difficulty_get_cat_qty(21));
     TEST_ASSERT_EQUAL_INT(5, difficulty_get_cat_qty(31));

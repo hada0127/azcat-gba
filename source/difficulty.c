@@ -64,7 +64,7 @@ u8 difficulty_get_cat_qty(u16 score) {
         if (score > cat_qty_table[i].threshold)
             return cat_qty_table[i].value;
     }
-    return 0;
+    return 1; /* score 0에서도 최소 1마리 스폰 보장 */
 }
 
 u8 difficulty_get_cat_accel(u16 score) {

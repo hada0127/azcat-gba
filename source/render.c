@@ -92,12 +92,13 @@ void render_sprites(const GameState* gs) {
     /* 플레이어 */
     if (gs->player.state == 0) {
         int px = FP_TO_INT(gs->player.x);
+        int bob = ((gs->player.anim_counter / 4) & 1) ? 1 : 0;
         u16 flip = (gs->player.direction == DIR_RIGHT) ? ATTR1_HFLIP : 0;
         obj_set_attr(&obj_buffer[OAM_PLAYER],
             ATTR0_SQUARE | ATTR0_4BPP,
             ATTR1_SIZE_32 | flip,
             ATTR2_PALBANK(PB_PLAYER) | ATTR2_ID(TID_PLAYER));
-        obj_set_pos(&obj_buffer[OAM_PLAYER], px, PLAYER_RENDER_Y);
+        obj_set_pos(&obj_buffer[OAM_PLAYER], px, PLAYER_RENDER_Y - bob);
     } else {
         obj_hide(&obj_buffer[OAM_PLAYER]);
     }

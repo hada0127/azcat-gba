@@ -20,8 +20,7 @@ def convert_bg(src_name, dst_name, size=(240, 160)):
     dst_path = os.path.join(GFX, dst_name)
     im = Image.open(src_path).convert('RGB')
     im = im.resize(size, Image.LANCZOS)
-    # 256색으로 양자화
-    im = im.quantize(colors=256, method=Image.MEDIANCUT)
+    # RGB 모드 그대로 저장 (grit이 직접 256색 양자화)
     im.save(dst_path)
     print(f"  BG: {src_name} -> {dst_name} ({size[0]}x{size[1]})")
     return dst_path
@@ -40,7 +39,7 @@ def make_night_bg(day_path, dst_name):
     g = g.point(lambda x: int(x * 0.7))
     b = b.point(lambda x: min(255, int(x * 1.3)))
     im = Image.merge('RGB', (r, g, b))
-    im = im.quantize(colors=256, method=Image.MEDIANCUT)
+    # RGB 모드 그대로 저장 (grit이 직접 256색 양자화)
     im.save(dst_path)
     print(f"  BG: night from day -> {dst_name}")
     return dst_path

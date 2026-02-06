@@ -13,6 +13,7 @@ typedef struct {
     u8  direction;      /* DIR_LEFT / DIR_RIGHT */
     u8  life;           /* HP (0~3) */
     u8  state;          /* 0=alive, 1=dead */
+    u8  anim_counter;   /* 이동 애니메이션 카운터 */
 } Player;
 
 void player_init(Player* p);
