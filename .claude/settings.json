@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(grit *)",
+      "Bash(arm-none-eabi-*)",
+      "Read(./**)",
+      "Edit(./source/**)",
+      "Edit(./include/**)",
+      "Edit(./Makefile)",
+      "Write(./source/**)",
+      "Write(./include/**)",
+      "Write(./data/**)",
+      "Write(./graphics/**)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)"
+    ]
+  }
+}

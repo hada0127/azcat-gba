@@ -1,0 +1,9 @@
+tellTarget("/player")
+{
+   gotoAndStop("dead");
+}
+tellTarget("/")
+{
+   gotoAndStop("gameover");
+   play();
+}

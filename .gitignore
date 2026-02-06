@@ -1,0 +1,22 @@
+# GBA ROM output
+*.gba
+*.elf
+*.sav
+
+# Build artifacts
+*.o
+*.d
+build/
+
+# devkitPro
+*.map
+
+# OS files
+Thumbs.db
+.DS_Store
+nul
+
+# Editor
+*.swp
+*.swo
+*~
