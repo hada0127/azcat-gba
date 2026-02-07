@@ -119,11 +119,11 @@ def main():
     print("\n[스프라이트]")
     # 플레이어 32x32
     convert_sprite('56.png', 'spr_player.png', (32, 32))
-    # 고양이 16x16
-    convert_sprite('37.png', 'spr_cat_white.png', (16, 16))
-    convert_sprite('39.png', 'spr_cat_brown.png', (16, 16))
-    # 아이템 16x16
-    convert_sprite('41.png', 'spr_item_hp.png', (16, 16))
+    # 고양이 16x16 (48.png = 낙하 중 고양이, 한 종류)
+    convert_sprite('48.png', 'spr_cat_white.png', (16, 16))
+    convert_sprite('48.png', 'spr_cat_brown.png', (16, 16))
+    # 아이템 16x16 (37=HP업, 43=폭탄)
+    convert_sprite('37.png', 'spr_item_hp.png', (16, 16))
     convert_sprite('43.png', 'spr_item_bomb.png', (16, 16))
     # 폭발 32x32
     convert_sprite('52.png', 'spr_explosion.png', (32, 32))
