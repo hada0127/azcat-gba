@@ -45,30 +45,58 @@ def make_night_bg(day_path, dst_name):
     return dst_path
 
 def convert_sprite(src_name, dst_name, size, transparent_bg=True):
-    """스프라이트 변환 (4bpp, 16색)"""
+    """스프라이트 변환 (4bpp, 16색). 인덱스 0 = 투명(마젠타)"""
     src_path = os.path.join(SRC, src_name)
     dst_path = os.path.join(GFX, dst_name)
     im = Image.open(src_path).convert('RGBA')
     im = im.resize(size, Image.LANCZOS)
 
     if transparent_bg:
-        # 투명 배경을 마젠타(#FF00FF)로 교체 (GBA 투명색)
+        # 알파 마스크 추출
+        alpha_mask = [px[3] > 128 for px in im.getdata()]
+
+        # 투명→마젠타 합성
         bg = Image.new('RGBA', im.size, (255, 0, 255, 255))
-        # 알파 합성
-        result = Image.new('RGBA', im.size, (255, 0, 255, 255))
-        result.paste(im, (0, 0), im)
-        im = result.convert('RGB')
+        bg.paste(im, (0, 0), im)
+        rgb = bg.convert('RGB')
+
+        # 불투명 픽셀만 모아서 15색 양자화 (인덱스 0은 투명용 예약)
+        opaque_pixels = [px for px, opaque in zip(rgb.getdata(), alpha_mask) if opaque]
+
+        if opaque_pixels:
+            opaque_img = Image.new('RGB', (len(opaque_pixels), 1))
+            opaque_img.putdata(opaque_pixels)
+            opaque_q = opaque_img.quantize(colors=15, method=Image.MEDIANCUT)
+            pal = opaque_q.getpalette()[:45]
+        else:
+            pal = [0] * 45
+
+        # 팔레트: 인덱스 0 = 마젠타(투명), 1~15 = 실제 색상
+        final_pal = [255, 0, 255] + pal
+        ref = Image.new('P', (1, 1))
+        ref.putpalette(final_pal + [0] * (768 - len(final_pal)))
+        rgb_q = rgb.quantize(palette=ref, dither=Image.Dither.NONE)
+
+        # 투명 픽셀을 강제로 인덱스 0
+        pixels = list(rgb_q.getdata())
+        for i in range(len(pixels)):
+            if not alpha_mask[i]:
+                pixels[i] = 0
+
+        result = Image.new('P', size)
+        result.putpalette(final_pal + [0] * (768 - len(final_pal)))
+        result.putdata(pixels)
+        result.save(dst_path)
     else:
         im = im.convert('RGB')
+        im = im.quantize(colors=16, method=Image.MEDIANCUT)
+        im.save(dst_path)
 
-    # 16색으로 양자화 (마젠타 유지)
-    im = im.quantize(colors=16, method=Image.MEDIANCUT)
-    im.save(dst_path)
     print(f"  SPR: {src_name} -> {dst_name} ({size[0]}x{size[1]})")
     return dst_path
 
 def convert_player_sprites():
-    """플레이어 걷기 3프레임 + 사망 1프레임 (공유 16색 팔레트)"""
+    """플레이어 걷기 3프레임 + 사망 1프레임 (공유 15색 팔레트 + 인덱스 0 투명)"""
     frames = [
         ('56.png', 'spr_player_walk0.png', (32, 32)),
         ('61.png', 'spr_player_walk1.png', (32, 32)),
@@ -76,43 +104,56 @@ def convert_player_sprites():
         ('66.png', 'spr_player_dead.png',  (64, 32)),
     ]
 
-    # 1) 각 프레임을 RGBA로 리사이즈
-    rgba_imgs = []
+    # 1) RGBA 리사이즈 + 알파마스크 + RGB 합성
+    alpha_masks = []
+    rgb_imgs = []
     for src_name, _, size in frames:
         src_path = os.path.join(SRC, src_name)
         im = Image.open(src_path).convert('RGBA')
         im = im.resize(size, Image.LANCZOS)
-        rgba_imgs.append(im)
 
-    # 2) 하나의 시트로 합쳐서 공통 16색 양자화
-    total_w = sum(im.width for im in rgba_imgs)
-    max_h = max(im.height for im in rgba_imgs)
-    sheet = Image.new('RGBA', (total_w, max_h), (255, 0, 255, 255))
-    x_off = 0
-    for im in rgba_imgs:
-        # 투명→마젠타 합성
-        temp = Image.new('RGBA', im.size, (255, 0, 255, 255))
-        temp.paste(im, (0, 0), im)
-        sheet.paste(temp, (x_off, 0))
-        x_off += im.width
+        alpha_masks.append([px[3] > 128 for px in im.getdata()])
 
-    sheet_rgb = sheet.convert('RGB')
-    sheet_q = sheet_rgb.quantize(colors=16, method=Image.MEDIANCUT)
-    palette = sheet_q.getpalette()[:48]  # 16색 * RGB
+        bg = Image.new('RGBA', im.size, (255, 0, 255, 255))
+        bg.paste(im, (0, 0), im)
+        rgb_imgs.append(bg.convert('RGB'))
 
-    # 3) 각 프레임에 공통 팔레트 적용하여 개별 저장
-    x_off = 0
+    # 2) 전체 불투명 픽셀 수집 → 15색 양자화
+    all_opaque = []
+    for i, img in enumerate(rgb_imgs):
+        for px, opaque in zip(img.getdata(), alpha_masks[i]):
+            if opaque:
+                all_opaque.append(px)
+
+    if all_opaque:
+        opaque_img = Image.new('RGB', (len(all_opaque), 1))
+        opaque_img.putdata(all_opaque)
+        opaque_q = opaque_img.quantize(colors=15, method=Image.MEDIANCUT)
+        pal = opaque_q.getpalette()[:45]
+    else:
+        pal = [0] * 45
+
+    # 팔레트: 인덱스 0 = 마젠타(투명), 1~15 = 실제 색상
+    final_pal = [255, 0, 255] + pal
+
+    # 3) 각 프레임에 공통 팔레트 적용 + 투명 강제 인덱스 0
     for i, (src_name, dst_name, size) in enumerate(frames):
         dst_path = os.path.join(GFX, dst_name)
-        # 시트에서 해당 영역 크롭
-        crop = sheet_rgb.crop((x_off, 0, x_off + size[0], size[1]))
-        # 공통 팔레트로 양자화 (dither=NONE으로 일관성 유지)
+
         ref = Image.new('P', (1, 1))
-        ref.putpalette(palette + [0] * (768 - len(palette)))
-        crop_q = crop.quantize(palette=ref, dither=Image.Dither.NONE)
-        crop_q.save(dst_path)
+        ref.putpalette(final_pal + [0] * (768 - len(final_pal)))
+        img_q = rgb_imgs[i].quantize(palette=ref, dither=Image.Dither.NONE)
+
+        pixels = list(img_q.getdata())
+        for j in range(len(pixels)):
+            if not alpha_masks[i][j]:
+                pixels[j] = 0
+
+        result = Image.new('P', size)
+        result.putpalette(final_pal + [0] * (768 - len(final_pal)))
+        result.putdata(pixels)
+        result.save(dst_path)
         print(f"  SPR: {src_name} -> {dst_name} ({size[0]}x{size[1]})")
-        x_off += size[0]
 
 
 def create_number_font():
@@ -217,8 +258,8 @@ def main():
     # 배경 (Mode 4, 8bpp)
     print("[배경]")
     convert_bg('8.jpg', 'bg_title.png')
-    day_path = convert_bg('69.jpg', 'bg_day.png')
-    make_night_bg(day_path, 'bg_night.png')
+    day_path = convert_bg('74.jpg', 'bg_day.png')
+    convert_bg('69.jpg', 'bg_night.png')
     convert_bg('71.jpg', 'bg_matrix.png')
 
     # 스프라이트 (OAM, 4bpp)

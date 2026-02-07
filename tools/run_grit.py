@@ -49,7 +49,7 @@ def main():
     # -p: palette, -ftc: C output
     print("\n[스프라이트 4bpp]")
     # 플레이어 걷기 32x32 + 사망 64x32
-    spr32_opts = ['-gB4', '-gt', '-gTFF00FF', '-p', '-ftc']
+    spr32_opts = ['-gB4', '-gt', '-gTFF00FF', '-pn16', '-p', '-ftc']
     run_grit('spr_player_walk0.png', 'spr_player_walk0', spr32_opts)
     run_grit('spr_player_walk1.png', 'spr_player_walk1', spr32_opts)
     run_grit('spr_player_walk2.png', 'spr_player_walk2', spr32_opts)
@@ -58,7 +58,7 @@ def main():
     run_grit('spr_explosion.png', 'spr_explosion', spr32_opts)
 
     # 16x16 스프라이트
-    spr16_opts = ['-gB4', '-gt', '-gTFF00FF', '-p', '-ftc']
+    spr16_opts = ['-gB4', '-gt', '-gTFF00FF', '-pn16', '-p', '-ftc']
     run_grit('spr_cat_white.png', 'spr_cat_white', spr16_opts)
     run_grit('spr_cat_brown.png', 'spr_cat_brown', spr16_opts)
     run_grit('spr_item_hp.png', 'spr_item_hp', spr16_opts)
@@ -70,7 +70,7 @@ def main():
 
     # 폰트 (4bpp 타일, 8x8 per char)
     print("\n[폰트 4bpp]")
-    font_opts = ['-gB4', '-gt', '-gTFF00FF', '-Mw1', '-Mh1', '-p', '-ftc']
+    font_opts = ['-gB4', '-gt', '-gTFF00FF', '-pn16', '-Mw1', '-Mh1', '-p', '-ftc']
     run_grit('font_numbers.png', 'font_numbers', font_opts)
 
     print("\n=== grit 변환 완료 ===")
