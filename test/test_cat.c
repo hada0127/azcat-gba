@@ -116,10 +116,11 @@ void test_cats_qty_increases_with_score(void) {
 void test_cats_sit_respawn(void) {
     srand(42);
     cats_init(cats);
-    /* 고양이를 착지 상태로 */
+    /* 고양이를 착지 상태로 (체류 거의 완료) */
     cats[0].state = CAT_STATE_SIT;
     cats[0].x = FP(100);
     cats[0].y = CAT_LAND_Y;
+    cats[0].v_accel = CAT_SIT_FRAMES - 1;  /* 다음 프레임에 리스폰 */
     s16 score_add = 0;
     /* score=10 → cat_qty=3, 인덱스 0은 리스폰 */
     cats_update(cats, 10, FP(-100), false, &score_add);

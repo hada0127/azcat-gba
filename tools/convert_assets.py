@@ -14,46 +14,47 @@ DATA = os.path.join(os.path.dirname(__file__), '..', 'data')
 os.makedirs(GFX, exist_ok=True)
 os.makedirs(DATA, exist_ok=True)
 
+PLAY_AREA_W = 180  # 게임 영역 너비 (오른쪽 60px = UI 패널)
+UI_PANEL_COLOR = (40, 40, 56)  # 어두운 남색 UI 패널
+
 def convert_bg(src_name, dst_name, size=(240, 160)):
-    """배경 이미지 변환 (240x160, 8bpp)"""
+    """배경 이미지 변환: 게임 영역(좌 180px) + UI 패널(우 60px)"""
     src_path = os.path.join(SRC, src_name)
     dst_path = os.path.join(GFX, dst_name)
     im = Image.open(src_path).convert('RGB')
-    im = im.resize(size, Image.LANCZOS)
-    # RGB 모드 그대로 저장 (grit이 직접 256색 양자화)
-    im.save(dst_path)
-    print(f"  BG: {src_name} -> {dst_name} ({size[0]}x{size[1]})")
+    # 게임 영역 크기로 리사이즈
+    game_bg = im.resize((PLAY_AREA_W, size[1]), Image.LANCZOS)
+    # 전체 캔버스: 게임 배경 + 오른쪽 UI 패널
+    result = Image.new('RGB', size, UI_PANEL_COLOR)
+    result.paste(game_bg, (0, 0))
+    result.save(dst_path)
+    print(f"  BG: {src_name} -> {dst_name} ({size[0]}x{size[1]}, play={PLAY_AREA_W})")
     return dst_path
 
-def make_night_bg(day_path, dst_name):
-    """낮 배경에서 밤 배경 생성 (어둡게 + 푸른색 톤)"""
-    dst_path = os.path.join(GFX, dst_name)
-    im = Image.open(day_path).convert('RGB')
-    # 밝기 줄이기
-    enhancer = ImageEnhance.Brightness(im)
-    im = enhancer.enhance(0.4)
-    # 푸른색 톤 추가
-    r, g, b = im.split()
-    from PIL import ImageChops
-    r = r.point(lambda x: int(x * 0.6))
-    g = g.point(lambda x: int(x * 0.7))
-    b = b.point(lambda x: min(255, int(x * 1.3)))
-    im = Image.merge('RGB', (r, g, b))
-    # RGB 모드 그대로 저장 (grit이 직접 256색 양자화)
-    im.save(dst_path)
-    print(f"  BG: night from day -> {dst_name}")
-    return dst_path
+def resize_preserve_aspect(im, target_size):
+    """종횡비 보존 리사이즈 → target_size 내에 센터링, 나머지 투명"""
+    tw, th = target_size
+    ow, oh = im.size
+    scale = min(tw / ow, th / oh)
+    nw = max(1, int(ow * scale))
+    nh = max(1, int(oh * scale))
+    resized = im.resize((nw, nh), Image.LANCZOS)
+    result = Image.new('RGBA', target_size, (0, 0, 0, 0))
+    ox = (tw - nw) // 2
+    oy = th - nh  # 하단 정렬 (캐릭터 발이 바닥에 닿도록)
+    result.paste(resized, (ox, oy))
+    return result
 
 def convert_sprite(src_name, dst_name, size, transparent_bg=True):
-    """스프라이트 변환 (4bpp, 16색). 인덱스 0 = 투명(마젠타)"""
+    """스프라이트 변환 (4bpp, 16색). 종횡비 보존, 인덱스 0 = 투명"""
     src_path = os.path.join(SRC, src_name)
     dst_path = os.path.join(GFX, dst_name)
     im = Image.open(src_path).convert('RGBA')
-    im = im.resize(size, Image.LANCZOS)
+    im = resize_preserve_aspect(im, size)
 
     if transparent_bg:
-        # 알파 마스크 추출
-        alpha_mask = [px[3] > 128 for px in im.getdata()]
+        # 알파 마스크 추출 (임계값 64: 반투명 그림자 보존)
+        alpha_mask = [px[3] > 64 for px in im.getdata()]
 
         # 투명→마젠타 합성
         bg = Image.new('RGBA', im.size, (255, 0, 255, 255))
@@ -104,15 +105,15 @@ def convert_player_sprites():
         ('66.png', 'spr_player_dead.png',  (64, 32)),
     ]
 
-    # 1) RGBA 리사이즈 + 알파마스크 + RGB 합성
+    # 1) RGBA 리사이즈(종횡비 보존) + 알파마스크 + RGB 합성
     alpha_masks = []
     rgb_imgs = []
     for src_name, _, size in frames:
         src_path = os.path.join(SRC, src_name)
         im = Image.open(src_path).convert('RGBA')
-        im = im.resize(size, Image.LANCZOS)
+        im = resize_preserve_aspect(im, size)
 
-        alpha_masks.append([px[3] > 128 for px in im.getdata()])
+        alpha_masks.append([px[3] > 64 for px in im.getdata()])
 
         bg = Image.new('RGBA', im.size, (255, 0, 255, 255))
         bg.paste(im, (0, 0), im)

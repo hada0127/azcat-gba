@@ -53,6 +53,9 @@
 /* 플레이어 렌더 Y (화면 하단) */
 #define PLAYER_RENDER_Y (SCREEN_H - 32)
 
+/* UI 패널 좌표 (오른쪽 60px 영역) */
+#define UI_PANEL_X      (PLAY_AREA_W + 2)  /* 182 */
+
 void render_init(void);
 void render_set_bg(u8 bg_type);
 void render_set_title_bg(void);

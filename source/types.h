@@ -13,18 +13,19 @@
 /* ── 화면 / 레이아웃 ── */
 #define SCREEN_W            240
 #define SCREEN_H            160
+#define PLAY_AREA_W         180  /* 게임 영역 너비 (오른쪽 60px = UI 패널) */
 #define HUD_HEIGHT               16
 #define GAME_AREA_H         (SCREEN_H - HUD_HEIGHT)
 
-/* ── 60fps 보정 계수 (원본 20fps → GBA 60fps) ── */
-#define FRAME_RATE_RATIO    3
+/* ── 60fps 보정 계수 (원본 ~12fps → GBA 60fps) ── */
+#define FRAME_RATE_RATIO    5
 
 /* ── 플레이어 ── */
-#define PLAYER_INIT_X       FP(108)
+#define PLAYER_INIT_X       FP(74)   /* (PLAY_AREA_W - 32) / 2 */
 #define PLAYER_X_MIN        FP(0)
-#define PLAYER_X_MAX        FP(216)
-#define PLAYER_BASE_SPEED   FP_FROM_FLOAT_CONST(1.667f)  /* FP(5)/3 */
-#define PLAYER_ACCEL_INC    FP_FROM_FLOAT_CONST(0.067f)  /* 0.2/3 */
+#define PLAYER_X_MAX        FP(148)  /* PLAY_AREA_W - 32 */
+#define PLAYER_BASE_SPEED   FP_FROM_FLOAT_CONST(1.0f)    /* FP(5)/5 */
+#define PLAYER_ACCEL_INC    FP_FROM_FLOAT_CONST(0.04f)   /* 0.2/5 */
 #define PLAYER_ACCEL_MAX    4
 #define PLAYER_LIFE_MAX     3
 #define PLAYER_LIFE_INIT    3
@@ -32,22 +33,23 @@
 /* ── 고양이 ── */
 #define MAX_CATS            33
 #define CAT_SPAWN_X_MIN     1
-#define CAT_SPAWN_X_MAX     224
+#define CAT_SPAWN_X_MAX     164  /* PLAY_AREA_W - 16 */
 #define CAT_SPAWN_Y_MIN     (-120)
 #define CAT_SPAWN_Y_MAX     (-20)
 #define CAT_LAND_Y          FP(128)
 #define CAT_HIT_Y_MIN       FP(96)
 #define CAT_HIT_Y_MAX       FP(128)
-#define CAT_GRAVITY         FP_FROM_FLOAT_CONST(0.167f)  /* 0.5/3 */
-#define CAT_BASE_FALL       FP_FROM_FLOAT_CONST(0.333f)  /* FP(1)/3 */
+#define CAT_GRAVITY         FP_FROM_FLOAT_CONST(0.1f)    /* 0.5/5 */
+#define CAT_BASE_FALL       FP_FROM_FLOAT_CONST(0.2f)    /* FP(1)/5 */
+#define CAT_SIT_FRAMES      15  /* 착지 체류 프레임 (0.25초@60fps) */
 
 /* ── 아이템 ── */
 #define ITEM_SPAWN_X_MIN    1
-#define ITEM_SPAWN_X_MAX    224
+#define ITEM_SPAWN_X_MAX    164  /* PLAY_AREA_W - 16 */
 #define ITEM_SPAWN_Y        FP(-24)
 #define ITEM_LAND_Y         FP(140)
-#define ITEM_GRAVITY        FP_FROM_FLOAT_CONST(0.167f)  /* 0.5/3 */
-#define ITEM_BASE_FALL      FP_FROM_FLOAT_CONST(0.333f)  /* FP(1)/3 */
+#define ITEM_GRAVITY        FP_FROM_FLOAT_CONST(0.1f)    /* 0.5/5 */
+#define ITEM_BASE_FALL      FP_FROM_FLOAT_CONST(0.2f)    /* FP(1)/5 */
 #define ITEM_SIT_TIMEOUT    (45 * FRAME_RATE_RATIO)
 #define ITEM_SPAWN_INTERVAL (150 * FRAME_RATE_RATIO)
 #define ITEM_TYPE_HP        1
