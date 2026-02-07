@@ -19,17 +19,17 @@
 #define OAM_COUNT       43
 
 /* ── OBJ 타일 ID (Mode 4: 512부터) ── */
-#define TID_PLAYER      512
-#define TID_CAT_WHITE   528
-#define TID_CAT_BROWN   532
-#define TID_ITEM_HP     536
-#define TID_ITEM_BOMB   540
-#define TID_EXPLOSION   544
-#define TID_FACE_HAPPY  560
-#define TID_FACE_NORMAL 564
-#define TID_FACE_HURT   568
-#define TID_FACE_DEAD   572
-#define TID_FONT        576  /* 0~9 숫자 (10타일) */
+#define TID_PLAYER      512  /* 16타일 32x32 */
+#define TID_CAT_WHITE   528  /*  8타일 16x32 */
+#define TID_CAT_BROWN   536  /*  8타일 16x32 */
+#define TID_ITEM_HP     544  /*  4타일 16x16 */
+#define TID_ITEM_BOMB   548  /*  4타일 16x16 */
+#define TID_EXPLOSION   552  /* 16타일 32x32 */
+#define TID_FACE_HAPPY  568  /*  4타일 16x16 */
+#define TID_FACE_NORMAL 572
+#define TID_FACE_HURT   576
+#define TID_FACE_DEAD   580
+#define TID_FONT        584  /* 0~9 숫자 (10타일) */
 
 /* ── OBJ 팔레트 뱅크 ── */
 #define PB_PLAYER       0
@@ -57,6 +57,7 @@ void render_sprites(const GameState* gs);
 void render_hud(const GameState* gs);
 void render_title_hud(s16 hiscore);
 void render_gameover_screen(const GameState* gs, const GameOverResult* result);
+void render_gameover_grade(u8 grade_index);
 void render_hide_all(void);
 void render_oam_update(void);
 

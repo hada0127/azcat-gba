@@ -86,6 +86,7 @@ int main(void) {
                     save_write(&save);
                 }
                 prev_state = STATE_GAMEOVER;
+                render_gameover_grade(go_result.grade_index);
                 render_gameover_screen(&gs, &go_result);
                 break;
             }

@@ -21,6 +21,7 @@
 #include "spr_face_hurt.h"
 #include "spr_face_dead.h"
 #include "font_numbers.h"
+#include "grade_images.h"
 
 /* OAM 섀도우 버퍼 */
 static OBJ_ATTR obj_buffer[128];
@@ -31,18 +32,18 @@ void render_init(void) {
 
     /* Mode 4에서 OBJ 타일은 tile_mem[5] (ID 512~)부터 안전 */
 
-    /* 타일 로드 */
-    memcpy32(&tile_mem[5][0],  spr_playerTiles,      spr_playerTilesLen / 4);
-    memcpy32(&tile_mem[5][16], spr_cat_whiteTiles,    spr_cat_whiteTilesLen / 4);
-    memcpy32(&tile_mem[5][20], spr_cat_brownTiles,    spr_cat_brownTilesLen / 4);
-    memcpy32(&tile_mem[5][24], spr_item_hpTiles,      spr_item_hpTilesLen / 4);
-    memcpy32(&tile_mem[5][28], spr_item_bombTiles,    spr_item_bombTilesLen / 4);
-    memcpy32(&tile_mem[5][32], spr_explosionTiles,    spr_explosionTilesLen / 4);
-    memcpy32(&tile_mem[5][48], spr_face_happyTiles,   spr_face_happyTilesLen / 4);
-    memcpy32(&tile_mem[5][52], spr_face_normalTiles,  spr_face_normalTilesLen / 4);
-    memcpy32(&tile_mem[5][56], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);
-    memcpy32(&tile_mem[5][60], spr_face_deadTiles,    spr_face_deadTilesLen / 4);
-    memcpy32(&tile_mem[5][64], font_numbersTiles,     font_numbersTilesLen / 4);
+    /* 타일 로드 (TID 오프셋 = tile_mem[5][TID-512]) */
+    memcpy32(&tile_mem[5][0],  spr_playerTiles,      spr_playerTilesLen / 4);     /* 512: 16타일 */
+    memcpy32(&tile_mem[5][16], spr_cat_whiteTiles,    spr_cat_whiteTilesLen / 4);  /* 528: 8타일 */
+    memcpy32(&tile_mem[5][24], spr_cat_brownTiles,    spr_cat_brownTilesLen / 4);  /* 536: 8타일 */
+    memcpy32(&tile_mem[5][32], spr_item_hpTiles,      spr_item_hpTilesLen / 4);   /* 544: 4타일 */
+    memcpy32(&tile_mem[5][36], spr_item_bombTiles,    spr_item_bombTilesLen / 4);  /* 548: 4타일 */
+    memcpy32(&tile_mem[5][40], spr_explosionTiles,    spr_explosionTilesLen / 4);  /* 552: 16타일 */
+    memcpy32(&tile_mem[5][56], spr_face_happyTiles,   spr_face_happyTilesLen / 4); /* 568: 4타일 */
+    memcpy32(&tile_mem[5][60], spr_face_normalTiles,  spr_face_normalTilesLen / 4);/* 572 */
+    memcpy32(&tile_mem[5][64], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);  /* 576 */
+    memcpy32(&tile_mem[5][68], spr_face_deadTiles,    spr_face_deadTilesLen / 4);  /* 580 */
+    memcpy32(&tile_mem[5][72], font_numbersTiles,     font_numbersTilesLen / 4);   /* 584 */
 
     /* OBJ 팔레트 로드 */
     memcpy16(pal_obj_bank[PB_PLAYER],      spr_playerPal,      spr_playerPalLen / 2);
@@ -112,8 +113,8 @@ void render_sprites(const GameState* gs) {
             u16 tid = (i & 1) ? TID_CAT_BROWN : TID_CAT_WHITE;
             u16 pb  = (i & 1) ? PB_CAT_BROWN  : PB_CAT_WHITE;
             obj_set_attr(&obj_buffer[oam],
-                ATTR0_SQUARE | ATTR0_4BPP,
-                ATTR1_SIZE_16,
+                ATTR0_TALL | ATTR0_4BPP,
+                ATTR1_SIZE_32,
                 ATTR2_PALBANK(pb) | ATTR2_ID(tid));
             obj_set_pos(&obj_buffer[oam], cx, cy);
         } else {
@@ -209,10 +210,50 @@ void render_title_hud(s16 hiscore) {
     obj_hide(&obj_buffer[OAM_BOMB_ICON]);
 }
 
+/* ── 등급 이미지를 프레임버퍼에 블릿 (Mode 4, 8bpp) ── */
+#define GRADE_PAL_IDX 255  /* 등급 텍스트용 팔레트 인덱스 */
+
+void render_gameover_grade(u8 grade_index) {
+    if (grade_index >= GRADE_COUNT) return;
+
+    /* 팔레트 인덱스 255에 흰색 설정 */
+    pal_bg_mem[GRADE_PAL_IDX] = RGB15(31, 31, 31);
+
+    const unsigned char* src = grade_image_data[grade_index];
+    /* 화면 중앙 배치 */
+    int ox = (SCREEN_W - GRADE_IMG_W) / 2;
+    int oy = SCREEN_H / 2 + 10;
+
+    u16* page0 = (u16*)0x06000000;
+    u16* page1 = (u16*)0x0600A000;
+
+    int y, x;
+    for (y = 0; y < GRADE_IMG_H; y++) {
+        int row = oy + y;
+        if (row >= SCREEN_H) break;
+        u16* dst0 = &page0[row * (SCREEN_W / 2)];
+        u16* dst1 = &page1[row * (SCREEN_W / 2)];
+        for (x = 0; x < GRADE_IMG_W; x += 2) {
+            int px = ox + x;
+            if (px >= SCREEN_W - 1) break;
+            u8 lo = src[y * GRADE_IMG_W + x] ? GRADE_PAL_IDX : 0;
+            u8 hi = src[y * GRADE_IMG_W + x + 1] ? GRADE_PAL_IDX : 0;
+            if (lo || hi) {
+                int idx = px / 2;
+                u16 old = dst0[idx];
+                /* 투명(0)인 부분은 배경 유지 */
+                u8 final_lo = lo ? lo : (u8)(old & 0xFF);
+                u8 final_hi = hi ? hi : (u8)(old >> 8);
+                u16 val = (final_hi << 8) | final_lo;
+                dst0[idx] = val;
+                dst1[idx] = val;
+            }
+        }
+    }
+}
+
 /* ── 게임오버 화면 ── */
 void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
-    (void)result;
-
     /* 게임 스프라이트 유지 (프리즈 상태) */
     /* 얼굴: 사망 */
     obj_set_attr(&obj_buffer[OAM_FACE],

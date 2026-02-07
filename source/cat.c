@@ -48,7 +48,7 @@ u8 cats_update(Cat cats[], u16 score, s32 player_x,
 
         if (cats[i].state == CAT_STATE_FALLING) {
             /* 낙하 */
-            cats[i].y += CAT_BASE_FALL + cats[i].v_accel + FP(cat_accel);
+            cats[i].y += CAT_BASE_FALL + cats[i].v_accel + FP(cat_accel) / FRAME_RATE_RATIO;
             cats[i].v_accel += CAT_GRAVITY;
 
             /* 충돌 체크 */

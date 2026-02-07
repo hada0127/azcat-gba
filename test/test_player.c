@@ -81,8 +81,9 @@ void test_player_accel_boost(void) {
     p.player_accel = 2;
     s32 prev_x = p.x;
     player_update(&p, KEY_RIGHT, false);
-    /* speed = FP(5) + 0 + FP(2) = FP(7) */
-    TEST_ASSERT_EQUAL_INT32(prev_x + FP(7), p.x);
+    /* speed = PLAYER_BASE_SPEED + 0 + FP(2)/3 */
+    s32 expected_speed = PLAYER_BASE_SPEED + FP(2) / FRAME_RATE_RATIO;
+    TEST_ASSERT_EQUAL_INT32(prev_x + expected_speed, p.x);
 }
 
 void test_player_continuous_accel(void) {
@@ -92,8 +93,8 @@ void test_player_continuous_accel(void) {
     for (i = 0; i < 10; i++) {
         player_update(&p, KEY_RIGHT, false);
     }
-    /* v_accel = 51 * 10 = 510 */
-    TEST_ASSERT_EQUAL_INT32(510, p.v_accel);
+    /* v_accel = PLAYER_ACCEL_INC * 10 */
+    TEST_ASSERT_EQUAL_INT32(PLAYER_ACCEL_INC * 10, p.v_accel);
 }
 
 int run_player_tests(void) {

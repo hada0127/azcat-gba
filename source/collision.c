@@ -4,7 +4,7 @@
 #define PLAYER_W    FP(24)
 #define PLAYER_H    FP(24)
 #define CAT_W       FP(16)
-#define CAT_H       FP(16)
+#define CAT_H       FP(32)
 #define ITEM_W      FP(16)
 #define ITEM_H      FP(16)
 

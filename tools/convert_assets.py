@@ -105,6 +105,64 @@ def draw_digit(draw, x, y, digit):
             if ch == '1':
                 draw.point((ox + col, oy + row), fill=(255, 255, 255))
 
+def convert_grade_images():
+    """등급 이미지 21개를 1bpp C 배열로 변환 → data/grade_images.h"""
+    dst_path = os.path.join(DATA, 'grade_images.h')
+
+    # grade_index 순서: 0=d100(img 123), 1=d10(121), ..., 20=g10(83)
+    GRADE_COUNT = 21
+    IMG_W = 72  # 71 → 72 (8의 배수로 패딩, Mode 4 편의)
+    IMG_H = 15
+
+    lines = []
+    lines.append('#ifndef GRADE_IMAGES_H')
+    lines.append('#define GRADE_IMAGES_H')
+    lines.append('')
+    lines.append(f'#define GRADE_IMG_W {IMG_W}')
+    lines.append(f'#define GRADE_IMG_H {IMG_H}')
+    lines.append('')
+
+    row_bytes = IMG_W  # 8bpp: 1바이트/픽셀
+    all_data = []
+
+    for gi in range(GRADE_COUNT):
+        img_num = 123 - gi * 2
+        src_path = os.path.join(SRC, f'{img_num}.png')
+        im = Image.open(src_path).convert('RGBA')
+
+        # 72xH로 리사이즈 (원본 71x15 → 72x15, 오른쪽 1px 패딩)
+        padded = Image.new('RGBA', (IMG_W, IMG_H), (0, 0, 0, 0))
+        padded.paste(im, (0, 0))
+
+        # 8bpp 인덱스 데이터 생성: 불투명 픽셀=1, 투명=0
+        pixels = []
+        for y in range(IMG_H):
+            for x in range(IMG_W):
+                r, g, b, a = padded.getpixel((x, y))
+                pixels.append(1 if a > 128 else 0)
+        all_data.append(pixels)
+        print(f"  GRADE: {img_num}.png -> index {gi}")
+
+    # 전체 데이터를 하나의 배열로 합치기
+    lines.append(f'/* 등급 이미지 {GRADE_COUNT}개, {IMG_W}x{IMG_H}, 8bpp 인덱스(0/1) */')
+    lines.append(f'static const unsigned char grade_image_data[{GRADE_COUNT}][{IMG_W * IMG_H}] = {{')
+    for gi in range(GRADE_COUNT):
+        lines.append(f'    {{ /* grade {gi} (img {123-gi*2}) */')
+        data = all_data[gi]
+        for row in range(IMG_H):
+            start = row * IMG_W
+            row_data = data[start:start + IMG_W]
+            hex_str = ','.join(f'{b}' for b in row_data)
+            lines.append(f'        {hex_str},')
+        lines.append('    },')
+    lines.append('};')
+    lines.append('')
+    lines.append('#endif /* GRADE_IMAGES_H */')
+
+    with open(dst_path, 'w') as f:
+        f.write('\n'.join(lines) + '\n')
+    print(f"  -> {dst_path} ({os.path.getsize(dst_path)} bytes)")
+
 def main():
     print("=== 에셋 변환 시작 ===\n")
 
@@ -119,9 +177,9 @@ def main():
     print("\n[스프라이트]")
     # 플레이어 32x32
     convert_sprite('56.png', 'spr_player.png', (32, 32))
-    # 고양이 16x16 (48.png = 낙하 중 고양이, 한 종류)
-    convert_sprite('48.png', 'spr_cat_white.png', (16, 16))
-    convert_sprite('48.png', 'spr_cat_brown.png', (16, 16))
+    # 고양이 16x32 (48.png = 낙하 중 고양이, tall OAM)
+    convert_sprite('48.png', 'spr_cat_white.png', (16, 32))
+    convert_sprite('48.png', 'spr_cat_brown.png', (16, 32))
     # 아이템 16x16 (37=HP업, 43=폭탄)
     convert_sprite('37.png', 'spr_item_hp.png', (16, 16))
     convert_sprite('43.png', 'spr_item_bomb.png', (16, 16))
@@ -136,6 +194,10 @@ def main():
     # 폰트
     print("\n[폰트]")
     create_number_font()
+
+    # 등급 이미지
+    print("\n[등급 이미지]")
+    convert_grade_images()
 
     print("\n=== 변환 완료 ===")
     print(f"graphics/ 에 저장됨. 이후 grit으로 data/*.c 생성 필요.")

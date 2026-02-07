@@ -16,7 +16,7 @@ void player_update(Player* p, u16 keys_held, bool bomb_active) {
     /* 사망 시 이동 불가 */
     if (p->state == 1) return;
 
-    s32 speed = PLAYER_BASE_SPEED + p->v_accel + FP(p->player_accel);
+    s32 speed = PLAYER_BASE_SPEED + p->v_accel + FP(p->player_accel) / FRAME_RATE_RATIO;
 
     if (keys_held & KEY_LEFT) {
         p->direction = DIR_LEFT;
