@@ -48,9 +48,13 @@ def main():
     # -gt: tile mode, -gT!: transparent color = first pixel (or magenta)
     # -p: palette, -ftc: C output
     print("\n[스프라이트 4bpp]")
-    # 32x32 스프라이트
+    # 플레이어 걷기 32x32 + 사망 64x32
     spr32_opts = ['-gB4', '-gt', '-gTFF00FF', '-p', '-ftc']
-    run_grit('spr_player.png', 'spr_player', spr32_opts)
+    run_grit('spr_player_walk0.png', 'spr_player_walk0', spr32_opts)
+    run_grit('spr_player_walk1.png', 'spr_player_walk1', spr32_opts)
+    run_grit('spr_player_walk2.png', 'spr_player_walk2', spr32_opts)
+    run_grit('spr_player_dead.png', 'spr_player_dead', spr32_opts)
+    # 폭발 32x32
     run_grit('spr_explosion.png', 'spr_explosion', spr32_opts)
 
     # 16x16 스프라이트

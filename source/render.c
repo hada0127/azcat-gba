@@ -10,7 +10,10 @@
 #include "bg_day.h"
 #include "bg_night.h"
 #include "bg_matrix.h"
-#include "spr_player.h"
+#include "spr_player_walk0.h"
+#include "spr_player_walk1.h"
+#include "spr_player_walk2.h"
+#include "spr_player_dead.h"
 #include "spr_cat_white.h"
 #include "spr_cat_brown.h"
 #include "spr_item_hp.h"
@@ -33,20 +36,23 @@ void render_init(void) {
     /* Mode 4에서 OBJ 타일은 tile_mem[5] (ID 512~)부터 안전 */
 
     /* 타일 로드 (TID 오프셋 = tile_mem[5][TID-512]) */
-    memcpy32(&tile_mem[5][0],  spr_playerTiles,      spr_playerTilesLen / 4);     /* 512: 16타일 */
-    memcpy32(&tile_mem[5][16], spr_cat_whiteTiles,    spr_cat_whiteTilesLen / 4);  /* 528: 8타일 */
-    memcpy32(&tile_mem[5][24], spr_cat_brownTiles,    spr_cat_brownTilesLen / 4);  /* 536: 8타일 */
-    memcpy32(&tile_mem[5][32], spr_item_hpTiles,      spr_item_hpTilesLen / 4);   /* 544: 4타일 */
-    memcpy32(&tile_mem[5][36], spr_item_bombTiles,    spr_item_bombTilesLen / 4);  /* 548: 4타일 */
-    memcpy32(&tile_mem[5][40], spr_explosionTiles,    spr_explosionTilesLen / 4);  /* 552: 16타일 */
-    memcpy32(&tile_mem[5][56], spr_face_happyTiles,   spr_face_happyTilesLen / 4); /* 568: 4타일 */
-    memcpy32(&tile_mem[5][60], spr_face_normalTiles,  spr_face_normalTilesLen / 4);/* 572 */
-    memcpy32(&tile_mem[5][64], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);  /* 576 */
-    memcpy32(&tile_mem[5][68], spr_face_deadTiles,    spr_face_deadTilesLen / 4);  /* 580 */
-    memcpy32(&tile_mem[5][72], font_numbersTiles,     font_numbersTilesLen / 4);   /* 584 */
+    memcpy32(&tile_mem[5][0],   spr_player_walk0Tiles, spr_player_walk0TilesLen / 4); /* 512: 16타일 */
+    memcpy32(&tile_mem[5][16],  spr_player_walk1Tiles, spr_player_walk1TilesLen / 4); /* 528: 16타일 */
+    memcpy32(&tile_mem[5][32],  spr_player_walk2Tiles, spr_player_walk2TilesLen / 4); /* 544: 16타일 */
+    memcpy32(&tile_mem[5][48],  spr_player_deadTiles,  spr_player_deadTilesLen / 4);  /* 560: 32타일 */
+    memcpy32(&tile_mem[5][80],  spr_cat_whiteTiles,    spr_cat_whiteTilesLen / 4);    /* 592: 8타일 */
+    memcpy32(&tile_mem[5][88],  spr_cat_brownTiles,    spr_cat_brownTilesLen / 4);    /* 600: 8타일 */
+    memcpy32(&tile_mem[5][96],  spr_item_hpTiles,      spr_item_hpTilesLen / 4);     /* 608: 4타일 */
+    memcpy32(&tile_mem[5][100], spr_item_bombTiles,    spr_item_bombTilesLen / 4);    /* 612: 4타일 */
+    memcpy32(&tile_mem[5][104], spr_explosionTiles,    spr_explosionTilesLen / 4);    /* 616: 16타일 */
+    memcpy32(&tile_mem[5][120], spr_face_happyTiles,   spr_face_happyTilesLen / 4);  /* 632: 4타일 */
+    memcpy32(&tile_mem[5][124], spr_face_normalTiles,  spr_face_normalTilesLen / 4);  /* 636 */
+    memcpy32(&tile_mem[5][128], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);    /* 640 */
+    memcpy32(&tile_mem[5][132], spr_face_deadTiles,    spr_face_deadTilesLen / 4);    /* 644 */
+    memcpy32(&tile_mem[5][136], font_numbersTiles,     font_numbersTilesLen / 4);     /* 648 */
 
-    /* OBJ 팔레트 로드 */
-    memcpy16(pal_obj_bank[PB_PLAYER],      spr_playerPal,      spr_playerPalLen / 2);
+    /* OBJ 팔레트 로드 (walk0 팔레트 = 공유 팔레트) */
+    memcpy16(pal_obj_bank[PB_PLAYER],      spr_player_walk0Pal, spr_player_walk0PalLen / 2);
     memcpy16(pal_obj_bank[PB_CAT_WHITE],   spr_cat_whitePal,   spr_cat_whitePalLen / 2);
     memcpy16(pal_obj_bank[PB_CAT_BROWN],   spr_cat_brownPal,   spr_cat_brownPalLen / 2);
     memcpy16(pal_obj_bank[PB_ITEM_HP],     spr_item_hpPal,     spr_item_hpPalLen / 2);
@@ -93,15 +99,32 @@ void render_sprites(const GameState* gs) {
     /* 플레이어 */
     if (gs->player.state == 0) {
         int px = FP_TO_INT(gs->player.x);
-        int bob = ((gs->player.anim_counter / 4) & 1) ? 1 : 0;
         u16 flip = (gs->player.direction == DIR_RIGHT) ? ATTR1_HFLIP : 0;
+
+        /* 걷기 애니메이션: 정지=W0, 이동=W0→W1→W2 순환 (6프레임마다 전환) */
+        u16 tid;
+        if (gs->player.anim_counter == 0) {
+            tid = TID_PLAYER_W0;
+        } else {
+            static const u16 walk_tids[] = {TID_PLAYER_W0, TID_PLAYER_W1, TID_PLAYER_W2};
+            u8 frame = (gs->player.anim_counter / 6) % 3;
+            tid = walk_tids[frame];
+        }
+
         obj_set_attr(&obj_buffer[OAM_PLAYER],
             ATTR0_SQUARE | ATTR0_4BPP,
             ATTR1_SIZE_32 | flip,
-            ATTR2_PALBANK(PB_PLAYER) | ATTR2_ID(TID_PLAYER));
-        obj_set_pos(&obj_buffer[OAM_PLAYER], px, PLAYER_RENDER_Y - bob);
+            ATTR2_PALBANK(PB_PLAYER) | ATTR2_ID(tid));
+        obj_set_pos(&obj_buffer[OAM_PLAYER], px, PLAYER_RENDER_Y);
     } else {
-        obj_hide(&obj_buffer[OAM_PLAYER]);
+        /* 사망: 64x32 WIDE 스프라이트 */
+        int px = FP_TO_INT(gs->player.x) - 16;  /* 중앙 보정 */
+        u16 flip = (gs->player.direction == DIR_RIGHT) ? ATTR1_HFLIP : 0;
+        obj_set_attr(&obj_buffer[OAM_PLAYER],
+            ATTR0_WIDE | ATTR0_4BPP,
+            ATTR1_SIZE_64 | flip,
+            ATTR2_PALBANK(PB_PLAYER) | ATTR2_ID(TID_PLAYER_DEAD));
+        obj_set_pos(&obj_buffer[OAM_PLAYER], px, PLAYER_RENDER_Y);
     }
 
     /* 고양이 */

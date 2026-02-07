@@ -67,6 +67,54 @@ def convert_sprite(src_name, dst_name, size, transparent_bg=True):
     print(f"  SPR: {src_name} -> {dst_name} ({size[0]}x{size[1]})")
     return dst_path
 
+def convert_player_sprites():
+    """플레이어 걷기 3프레임 + 사망 1프레임 (공유 16색 팔레트)"""
+    frames = [
+        ('56.png', 'spr_player_walk0.png', (32, 32)),
+        ('61.png', 'spr_player_walk1.png', (32, 32)),
+        ('63.png', 'spr_player_walk2.png', (32, 32)),
+        ('66.png', 'spr_player_dead.png',  (64, 32)),
+    ]
+
+    # 1) 각 프레임을 RGBA로 리사이즈
+    rgba_imgs = []
+    for src_name, _, size in frames:
+        src_path = os.path.join(SRC, src_name)
+        im = Image.open(src_path).convert('RGBA')
+        im = im.resize(size, Image.LANCZOS)
+        rgba_imgs.append(im)
+
+    # 2) 하나의 시트로 합쳐서 공통 16색 양자화
+    total_w = sum(im.width for im in rgba_imgs)
+    max_h = max(im.height for im in rgba_imgs)
+    sheet = Image.new('RGBA', (total_w, max_h), (255, 0, 255, 255))
+    x_off = 0
+    for im in rgba_imgs:
+        # 투명→마젠타 합성
+        temp = Image.new('RGBA', im.size, (255, 0, 255, 255))
+        temp.paste(im, (0, 0), im)
+        sheet.paste(temp, (x_off, 0))
+        x_off += im.width
+
+    sheet_rgb = sheet.convert('RGB')
+    sheet_q = sheet_rgb.quantize(colors=16, method=Image.MEDIANCUT)
+    palette = sheet_q.getpalette()[:48]  # 16색 * RGB
+
+    # 3) 각 프레임에 공통 팔레트 적용하여 개별 저장
+    x_off = 0
+    for i, (src_name, dst_name, size) in enumerate(frames):
+        dst_path = os.path.join(GFX, dst_name)
+        # 시트에서 해당 영역 크롭
+        crop = sheet_rgb.crop((x_off, 0, x_off + size[0], size[1]))
+        # 공통 팔레트로 양자화 (dither=NONE으로 일관성 유지)
+        ref = Image.new('P', (1, 1))
+        ref.putpalette(palette + [0] * (768 - len(palette)))
+        crop_q = crop.quantize(palette=ref, dither=Image.Dither.NONE)
+        crop_q.save(dst_path)
+        print(f"  SPR: {src_name} -> {dst_name} ({size[0]}x{size[1]})")
+        x_off += size[0]
+
+
 def create_number_font():
     """숫자 0~9 폰트 타일 생성 (8x8 각 글자, 80x8 이미지)"""
     dst_path = os.path.join(GFX, 'font_numbers.png')
@@ -175,8 +223,8 @@ def main():
 
     # 스프라이트 (OAM, 4bpp)
     print("\n[스프라이트]")
-    # 플레이어 32x32
-    convert_sprite('56.png', 'spr_player.png', (32, 32))
+    # 플레이어 걷기 3프레임 + 사망 (공유 팔레트)
+    convert_player_sprites()
     # 고양이 16x32 (48.png = 낙하 중 고양이, tall OAM)
     convert_sprite('48.png', 'spr_cat_white.png', (16, 32))
     convert_sprite('48.png', 'spr_cat_brown.png', (16, 32))

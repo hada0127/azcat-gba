@@ -19,17 +19,20 @@
 #define OAM_COUNT       43
 
 /* ── OBJ 타일 ID (Mode 4: 512부터) ── */
-#define TID_PLAYER      512  /* 16타일 32x32 */
-#define TID_CAT_WHITE   528  /*  8타일 16x32 */
-#define TID_CAT_BROWN   536  /*  8타일 16x32 */
-#define TID_ITEM_HP     544  /*  4타일 16x16 */
-#define TID_ITEM_BOMB   548  /*  4타일 16x16 */
-#define TID_EXPLOSION   552  /* 16타일 32x32 */
-#define TID_FACE_HAPPY  568  /*  4타일 16x16 */
-#define TID_FACE_NORMAL 572
-#define TID_FACE_HURT   576
-#define TID_FACE_DEAD   580
-#define TID_FONT        584  /* 0~9 숫자 (10타일) */
+#define TID_PLAYER_W0   512  /* 16타일 32x32 걷기0 */
+#define TID_PLAYER_W1   528  /* 16타일 32x32 걷기1 */
+#define TID_PLAYER_W2   544  /* 16타일 32x32 걷기2 */
+#define TID_PLAYER_DEAD 560  /* 32타일 64x32 사망  */
+#define TID_CAT_WHITE   592  /*  8타일 16x32 */
+#define TID_CAT_BROWN   600  /*  8타일 16x32 */
+#define TID_ITEM_HP     608  /*  4타일 16x16 */
+#define TID_ITEM_BOMB   612  /*  4타일 16x16 */
+#define TID_EXPLOSION   616  /* 16타일 32x32 */
+#define TID_FACE_HAPPY  632  /*  4타일 16x16 */
+#define TID_FACE_NORMAL 636
+#define TID_FACE_HURT   640
+#define TID_FACE_DEAD   644
+#define TID_FONT        648  /* 0~9 숫자 (10타일) */
 
 /* ── OBJ 팔레트 뱅크 ── */
 #define PB_PLAYER       0
