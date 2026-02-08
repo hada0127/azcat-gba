@@ -29,7 +29,7 @@ void test_gameover_right_to_retry(void) {
 }
 
 void test_gameover_no_input(void) {
-    TEST_ASSERT_EQUAL_INT(0, gameover_update(0));
+    TEST_ASSERT_EQUAL_INT(GAMEOVER_NONE, gameover_update(0));
 }
 
 int run_gameover_tests(void) {

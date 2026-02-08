@@ -12,7 +12,10 @@ typedef struct {
 /* 게임오버 초기화: 등급 판정, 하이스코어 갱신 여부 */
 void gameover_init(GameOverResult* result, s16 score, s16 hiscore);
 
-/* 게임오버 입력: 0=대기, STATE_TITLE=타이틀, STATE_PLAY=재도전 */
+/* 게임오버 입력 반환값 */
+#define GAMEOVER_NONE 0xFF
+
+/* 게임오버 입력: GAMEOVER_NONE=대기, STATE_TITLE=타이틀, STATE_PLAY=재도전 */
 u8 gameover_update(u16 keys_pressed);
 
 #endif /* GAMEOVER_H */
