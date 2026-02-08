@@ -409,18 +409,11 @@ void render_gameover_score(s16 score) {
     }
 }
 
-/* ── 게임오버 화면 (OAM 설정) ── */
+/* ── 게임오버 화면: 모든 OAM 숨김 (UI는 프레임버퍼에 블릿됨) ── */
 void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
     int i;
-    /* 얼굴 숨김 */
-    obj_hide(&obj_buffer[OAM_FACE]);
-
-    /* 점수 OAM 숨김 (프레임버퍼로 렌더) */
-    for (i = 0; i < 5; i++)
-        obj_hide(&obj_buffer[OAM_SCORE_START + i]);
-
-    /* 폭탄 아이콘 숨김 */
-    obj_hide(&obj_buffer[OAM_BOMB_ICON]);
+    for (i = 0; i < 128; i++)
+        obj_hide(&obj_buffer[i]);
 }
 
 /* ── 모든 스프라이트 숨기기 ── */
