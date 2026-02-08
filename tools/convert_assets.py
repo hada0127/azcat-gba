@@ -14,17 +14,23 @@ DATA = os.path.join(os.path.dirname(__file__), '..', 'data')
 os.makedirs(GFX, exist_ok=True)
 os.makedirs(DATA, exist_ok=True)
 
-PLAY_AREA_W = 180  # 게임 영역 너비 (오른쪽 60px = UI 패널)
-UI_PANEL_COLOR = (40, 40, 56)  # 어두운 남색 UI 패널
+PLAY_AREA_RATIO = 220 / 320  # 원본 320x240에서 플레이 영역 비율 (좌측 220px)
 
-def convert_bg(src_name, dst_name, size=(240, 160)):
-    """배경 이미지 변환: 전체 화면 리사이즈"""
+def convert_bg(src_name, dst_name, size=(240, 160), crop_ui=False):
+    """배경 이미지 변환: crop_ui=True면 UI 패널 제거 후 리사이즈"""
     src_path = os.path.join(SRC, src_name)
     dst_path = os.path.join(GFX, dst_name)
     im = Image.open(src_path).convert('RGB')
+    w, h = im.size
+    # 320x240 게임 배경은 오른쪽 ~100px이 UI 패널 → 왼쪽만 크롭
+    if crop_ui and w > 220:
+        crop_w = int(w * PLAY_AREA_RATIO)
+        im = im.crop((0, 0, crop_w, h))
+        print(f"  BG: {src_name} -> crop {crop_w}x{h} -> {dst_name} ({size[0]}x{size[1]})")
+    else:
+        print(f"  BG: {src_name} -> {dst_name} ({size[0]}x{size[1]})")
     result = im.resize(size, Image.LANCZOS)
     result.save(dst_path)
-    print(f"  BG: {src_name} -> {dst_name} ({size[0]}x{size[1]})")
     return dst_path
 
 def resize_preserve_aspect(im, target_size):
@@ -41,12 +47,28 @@ def resize_preserve_aspect(im, target_size):
     result.paste(resized, (ox, oy))
     return result
 
-def convert_sprite(src_name, dst_name, size, transparent_bg=True):
-    """스프라이트 변환 (4bpp, 16색). 종횡비 보존, 인덱스 0 = 투명"""
+def pad_original(im, target_size):
+    """원본 픽셀 사이즈 유지, OAM 캔버스에 패딩만 (스케일링 없음). 하단 중앙 정렬."""
+    tw, th = target_size
+    ow, oh = im.size
+    # 원본이 타겟보다 크면 종횡비 보존 리사이즈 (fallback)
+    if ow > tw or oh > th:
+        return resize_preserve_aspect(im, target_size)
+    result = Image.new('RGBA', target_size, (0, 0, 0, 0))
+    ox = (tw - ow) // 2
+    oy = th - oh  # 하단 정렬
+    result.paste(im, (ox, oy))
+    return result
+
+def convert_sprite(src_name, dst_name, size, transparent_bg=True, use_original=True):
+    """스프라이트 변환 (4bpp, 16색). use_original=True면 원본 사이즈 유지(패딩만)"""
     src_path = os.path.join(SRC, src_name)
     dst_path = os.path.join(GFX, dst_name)
     im = Image.open(src_path).convert('RGBA')
-    im = resize_preserve_aspect(im, size)
+    if use_original:
+        im = pad_original(im, size)
+    else:
+        im = resize_preserve_aspect(im, size)
 
     if transparent_bg:
         # 알파 마스크 추출 (임계값 64: 반투명 그림자 보존)
@@ -93,21 +115,22 @@ def convert_sprite(src_name, dst_name, size, transparent_bg=True):
     return dst_path
 
 def convert_player_sprites():
-    """플레이어 걷기 3프레임 + 사망 1프레임 (공유 15색 팔레트 + 인덱스 0 투명)"""
+    """플레이어 걷기 3프레임 + 사망 1프레임 (공유 15색 팔레트 + 인덱스 0 투명)
+    원본 사이즈 유지: walk 30x53→32x64, dead 54x25→64x32"""
     frames = [
-        ('56.png', 'spr_player_walk0.png', (32, 32)),
-        ('61.png', 'spr_player_walk1.png', (32, 32)),
-        ('63.png', 'spr_player_walk2.png', (32, 32)),
+        ('56.png', 'spr_player_walk0.png', (32, 64)),
+        ('61.png', 'spr_player_walk1.png', (32, 64)),
+        ('63.png', 'spr_player_walk2.png', (32, 64)),
         ('66.png', 'spr_player_dead.png',  (64, 32)),
     ]
 
-    # 1) RGBA 리사이즈(종횡비 보존) + 알파마스크 + RGB 합성
+    # 1) RGBA 원본 사이즈 패딩 + 알파마스크 + RGB 합성
     alpha_masks = []
     rgb_imgs = []
     for src_name, _, size in frames:
         src_path = os.path.join(SRC, src_name)
         im = Image.open(src_path).convert('RGBA')
-        im = resize_preserve_aspect(im, size)
+        im = pad_original(im, size)
 
         alpha_masks.append([px[3] > 64 for px in im.getdata()])
 
@@ -254,32 +277,31 @@ def main():
 
     # 배경 (Mode 4, 8bpp)
     print("[배경]")
-    convert_bg('8.jpg', 'bg_title.png')
-    day_path = convert_bg('74.jpg', 'bg_day.png')
-    convert_bg('69.jpg', 'bg_night.png')
-    convert_bg('71.jpg', 'bg_matrix.png')
+    convert_bg('8.jpg', 'bg_title.png')  # 타이틀: 전체 리사이즈 (UI 패널 없음)
+    day_path = convert_bg('74.jpg', 'bg_day.png', crop_ui=True)   # 게임: UI 패널 크롭
+    convert_bg('69.jpg', 'bg_night.png', crop_ui=True)
+    convert_bg('71.jpg', 'bg_matrix.png', crop_ui=True)
 
-    # 스프라이트 (OAM, 4bpp)
+    # 스프라이트 (OAM, 4bpp) — 원본 픽셀 사이즈 유지
     print("\n[스프라이트]")
-    # 플레이어 걷기 3프레임 + 사망 (공유 팔레트)
+    # 플레이어 걷기 3프레임(~30x53→32x64) + 사망(54x25→64x32) (공유 팔레트)
     convert_player_sprites()
-    # 고양이 16x32 (48.png = 낙하 중 고양이, tall OAM)
-    convert_sprite('48.png', 'spr_cat_white.png', (16, 32))
-    convert_sprite('48.png', 'spr_cat_brown.png', (16, 32))
-    # 고양이 앉은 자세 16x32 (50.png)
-    convert_sprite('50.png', 'spr_cat_sit.png', (16, 32))
-    # 아이템 16x16
-    convert_sprite('37.png', 'spr_item_hp.png', (16, 16))      # i1: HP 회복
-    convert_sprite('39.png', 'spr_item_bomb.png', (16, 16))     # i2: 폭탄
-    convert_sprite('41.png', 'spr_item_poison.png', (16, 16))   # i3: HP-1
-    convert_sprite('43.png', 'spr_item_speed.png', (16, 16))    # i4: 스피드업
-    # 폭발 32x32
+    # 고양이 32x32 (48.png 원본 17x32, 50.png 원본 17x32)
+    convert_sprite('48.png', 'spr_cat_white.png', (32, 32))
+    convert_sprite('48.png', 'spr_cat_brown.png', (32, 32))
+    convert_sprite('50.png', 'spr_cat_sit.png', (32, 32))
+    # 아이템 32x32 (원본 각 20x22)
+    convert_sprite('37.png', 'spr_item_hp.png', (32, 32))      # i1: HP 회복
+    convert_sprite('39.png', 'spr_item_bomb.png', (32, 32))     # i2: 폭탄
+    convert_sprite('41.png', 'spr_item_poison.png', (32, 32))   # i3: HP-1
+    convert_sprite('43.png', 'spr_item_speed.png', (32, 32))    # i4: 스피드업
+    # 폭발 32x32 (원본 29x26)
     convert_sprite('52.png', 'spr_explosion.png', (32, 32))
-    # 캐릭터 얼굴 32x32 (HUD용)
-    convert_sprite('28.png', 'spr_face_happy.png', (32, 32))
-    convert_sprite('30.png', 'spr_face_normal.png', (32, 32))
-    convert_sprite('32.png', 'spr_face_hurt.png', (32, 32))
-    convert_sprite('34.png', 'spr_face_dead.png', (32, 32))
+    # 캐릭터 얼굴 32x32 (HUD용, 원본 83x100 → OAM 최대 64x64이므로 축소)
+    convert_sprite('28.png', 'spr_face_happy.png', (32, 32), use_original=False)
+    convert_sprite('30.png', 'spr_face_normal.png', (32, 32), use_original=False)
+    convert_sprite('32.png', 'spr_face_hurt.png', (32, 32), use_original=False)
+    convert_sprite('34.png', 'spr_face_dead.png', (32, 32), use_original=False)
 
     # 폰트
     print("\n[폰트]")

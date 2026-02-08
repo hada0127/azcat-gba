@@ -33,7 +33,7 @@
 /* ── 고양이 ── */
 #define MAX_CATS            33
 #define CAT_SPAWN_X_MIN     1
-#define CAT_SPAWN_X_MAX     224  /* SCREEN_W - 16 */
+#define CAT_SPAWN_X_MAX     208  /* SCREEN_W - 32 (32x32 OAM) */
 #define CAT_SPAWN_Y_MIN     (-120)
 #define CAT_SPAWN_Y_MAX     (-20)
 #define CAT_LAND_Y          FP(128)
@@ -45,7 +45,7 @@
 
 /* ── 아이템 ── */
 #define ITEM_SPAWN_X_MIN    1
-#define ITEM_SPAWN_X_MAX    224  /* SCREEN_W - 16 */
+#define ITEM_SPAWN_X_MAX    208  /* SCREEN_W - 32 (32x32 OAM) */
 #define ITEM_SPAWN_Y        FP(-24)
 #define ITEM_LAND_Y         FP(140)
 #define ITEM_GRAVITY        FP_FROM_FLOAT_CONST(0.1f)    /* 0.5/5 */

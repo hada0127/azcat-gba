@@ -39,23 +39,23 @@ void render_init(void) {
     /* Mode 4에서 OBJ 타일은 tile_mem[5] (ID 512~)부터 안전 */
 
     /* 타일 로드 (TID 오프셋 = tile_mem[5][TID-512]) */
-    memcpy32(&tile_mem[5][0],   spr_player_walk0Tiles, spr_player_walk0TilesLen / 4); /* 512: 16타일 */
-    memcpy32(&tile_mem[5][16],  spr_player_walk1Tiles, spr_player_walk1TilesLen / 4); /* 528: 16타일 */
-    memcpy32(&tile_mem[5][32],  spr_player_walk2Tiles, spr_player_walk2TilesLen / 4); /* 544: 16타일 */
-    memcpy32(&tile_mem[5][48],  spr_player_deadTiles,  spr_player_deadTilesLen / 4);  /* 560: 32타일 */
-    memcpy32(&tile_mem[5][80],  spr_cat_whiteTiles,    spr_cat_whiteTilesLen / 4);    /* 592: 8타일 */
-    memcpy32(&tile_mem[5][88],  spr_cat_brownTiles,    spr_cat_brownTilesLen / 4);    /* 600: 8타일 */
-    memcpy32(&tile_mem[5][96],  spr_cat_sitTiles,      spr_cat_sitTilesLen / 4);      /* 608: 8타일 */
-    memcpy32(&tile_mem[5][104], spr_item_hpTiles,      spr_item_hpTilesLen / 4);     /* 616: 4타일 */
-    memcpy32(&tile_mem[5][108], spr_item_bombTiles,    spr_item_bombTilesLen / 4);    /* 620: 4타일 */
-    memcpy32(&tile_mem[5][112], spr_item_poisonTiles,  spr_item_poisonTilesLen / 4);  /* 624: 4타일 */
-    memcpy32(&tile_mem[5][116], spr_item_speedTiles,   spr_item_speedTilesLen / 4);   /* 628: 4타일 */
-    memcpy32(&tile_mem[5][120], spr_explosionTiles,    spr_explosionTilesLen / 4);    /* 632: 16타일 */
-    memcpy32(&tile_mem[5][136], spr_face_happyTiles,   spr_face_happyTilesLen / 4);  /* 648: 16타일 */
-    memcpy32(&tile_mem[5][152], spr_face_normalTiles,  spr_face_normalTilesLen / 4);  /* 664: 16타일 */
-    memcpy32(&tile_mem[5][168], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);    /* 680: 16타일 */
-    memcpy32(&tile_mem[5][184], spr_face_deadTiles,    spr_face_deadTilesLen / 4);    /* 696: 16타일 */
-    memcpy32(&tile_mem[5][200], font_numbersTiles,     font_numbersTilesLen / 4);     /* 712 */
+    memcpy32(&tile_mem[5][0],   spr_player_walk0Tiles, spr_player_walk0TilesLen / 4); /* 512: 32타일 32x64 */
+    memcpy32(&tile_mem[5][32],  spr_player_walk1Tiles, spr_player_walk1TilesLen / 4); /* 544: 32타일 */
+    memcpy32(&tile_mem[5][64],  spr_player_walk2Tiles, spr_player_walk2TilesLen / 4); /* 576: 32타일 */
+    memcpy32(&tile_mem[5][96],  spr_player_deadTiles,  spr_player_deadTilesLen / 4);  /* 608: 32타일 64x32 */
+    memcpy32(&tile_mem[5][128], spr_cat_whiteTiles,    spr_cat_whiteTilesLen / 4);    /* 640: 16타일 32x32 */
+    memcpy32(&tile_mem[5][144], spr_cat_brownTiles,    spr_cat_brownTilesLen / 4);    /* 656: 16타일 */
+    memcpy32(&tile_mem[5][160], spr_cat_sitTiles,      spr_cat_sitTilesLen / 4);      /* 672: 16타일 */
+    memcpy32(&tile_mem[5][176], spr_item_hpTiles,      spr_item_hpTilesLen / 4);     /* 688: 16타일 32x32 */
+    memcpy32(&tile_mem[5][192], spr_item_bombTiles,    spr_item_bombTilesLen / 4);    /* 704: 16타일 */
+    memcpy32(&tile_mem[5][208], spr_item_poisonTiles,  spr_item_poisonTilesLen / 4);  /* 720: 16타일 */
+    memcpy32(&tile_mem[5][224], spr_item_speedTiles,   spr_item_speedTilesLen / 4);   /* 736: 16타일 */
+    memcpy32(&tile_mem[5][240], spr_explosionTiles,    spr_explosionTilesLen / 4);    /* 752: 16타일 */
+    memcpy32(&tile_mem[5][256], spr_face_happyTiles,   spr_face_happyTilesLen / 4);  /* 768: 16타일 */
+    memcpy32(&tile_mem[5][272], spr_face_normalTiles,  spr_face_normalTilesLen / 4);  /* 784: 16타일 */
+    memcpy32(&tile_mem[5][288], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);    /* 800: 16타일 */
+    memcpy32(&tile_mem[5][304], spr_face_deadTiles,    spr_face_deadTilesLen / 4);    /* 816: 16타일 */
+    memcpy32(&tile_mem[5][320], font_numbersTiles,     font_numbersTilesLen / 4);     /* 832 */
 
     /* OBJ 팔레트 로드 (walk0 팔레트 = 공유 팔레트) */
     memcpy16(pal_obj_bank[PB_PLAYER],      spr_player_walk0Pal, spr_player_walk0PalLen / 2);
@@ -120,13 +120,14 @@ void render_sprites(const GameState* gs) {
             tid = walk_tids[frame];
         }
 
+        /* 32x64 TALL OAM (원본 ~30x53) */
         obj_set_attr(&obj_buffer[OAM_PLAYER],
-            ATTR0_SQUARE | ATTR0_4BPP,
-            ATTR1_SIZE_32 | flip,
+            ATTR0_TALL | ATTR0_4BPP,
+            ATTR1_SIZE_64 | flip,
             ATTR2_PALBANK(PB_PLAYER) | ATTR2_ID(tid));
         obj_set_pos(&obj_buffer[OAM_PLAYER], px, PLAYER_RENDER_Y);
     } else {
-        /* 사망: 64x32 WIDE 스프라이트 */
+        /* 사망: 64x32 WIDE 스프라이트 (원본 54x25) */
         int px = FP_TO_INT(gs->player.x) - 16;  /* 중앙 보정 */
         u16 flip = (gs->player.direction == DIR_RIGHT) ? ATTR1_HFLIP : 0;
         obj_set_attr(&obj_buffer[OAM_PLAYER],
@@ -136,27 +137,25 @@ void render_sprites(const GameState* gs) {
         obj_set_pos(&obj_buffer[OAM_PLAYER], px, PLAYER_RENDER_Y);
     }
 
-    /* 고양이 */
+    /* 고양이 (32x32 SQUARE, 원본 17x32 → x 오프셋 보정) */
     for (i = 0; i < MAX_CATS; i++) {
         int oam = OAM_CAT_START + i;
         if (gs->cats[i].state == CAT_STATE_SIT) {
-            /* 착지: 16x32 앉은 스프라이트 */
-            int cx = FP_TO_INT(gs->cats[i].x);
+            int cx = FP_TO_INT(gs->cats[i].x) - CAT_RENDER_OX;
             int cy = FP_TO_INT(gs->cats[i].y);
             obj_set_attr(&obj_buffer[oam],
-                ATTR0_TALL | ATTR0_4BPP,
+                ATTR0_SQUARE | ATTR0_4BPP,
                 ATTR1_SIZE_32,
                 ATTR2_PALBANK(PB_CAT_SIT) | ATTR2_ID(TID_CAT_SIT));
             obj_set_pos(&obj_buffer[oam], cx, cy);
         } else if (gs->cats[i].state == CAT_STATE_FALLING ||
                    gs->cats[i].state == CAT_STATE_EXIT) {
-            /* 낙하/퇴장: 16x32 낙하 스프라이트 */
-            int cx = FP_TO_INT(gs->cats[i].x);
+            int cx = FP_TO_INT(gs->cats[i].x) - CAT_RENDER_OX;
             int cy = FP_TO_INT(gs->cats[i].y);
             u16 tid = (i & 1) ? TID_CAT_BROWN : TID_CAT_WHITE;
             u16 pb  = (i & 1) ? PB_CAT_BROWN  : PB_CAT_WHITE;
             obj_set_attr(&obj_buffer[oam],
-                ATTR0_TALL | ATTR0_4BPP,
+                ATTR0_SQUARE | ATTR0_4BPP,
                 ATTR1_SIZE_32,
                 ATTR2_PALBANK(pb) | ATTR2_ID(tid));
             obj_set_pos(&obj_buffer[oam], cx, cy);
@@ -165,10 +164,10 @@ void render_sprites(const GameState* gs) {
         }
     }
 
-    /* 아이템 */
+    /* 아이템 (32x32 SQUARE, 원본 20x22 → x/y 오프셋 보정) */
     if (gs->item.active) {
-        int ix = FP_TO_INT(gs->item.x);
-        int iy = FP_TO_INT(gs->item.y);
+        int ix = FP_TO_INT(gs->item.x) - ITEM_RENDER_OX;
+        int iy = FP_TO_INT(gs->item.y) - ITEM_RENDER_OY;
         u16 tid, pb;
         switch (gs->item.type) {
         case ITEM_TYPE_BOMB:   tid = TID_ITEM_BOMB;   pb = PB_ITEM_BOMB;   break;
@@ -178,7 +177,7 @@ void render_sprites(const GameState* gs) {
         }
         obj_set_attr(&obj_buffer[OAM_ITEM],
             ATTR0_SQUARE | ATTR0_4BPP,
-            ATTR1_SIZE_16,
+            ATTR1_SIZE_32,
             ATTR2_PALBANK(pb) | ATTR2_ID(tid));
         obj_set_pos(&obj_buffer[OAM_ITEM], ix, iy);
     } else {

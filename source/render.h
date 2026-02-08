@@ -19,23 +19,24 @@
 #define OAM_COUNT       43
 
 /* ── OBJ 타일 ID (Mode 4: 512부터) ── */
-#define TID_PLAYER_W0   512  /* 16타일 32x32 걷기0 */
-#define TID_PLAYER_W1   528  /* 16타일 32x32 걷기1 */
-#define TID_PLAYER_W2   544  /* 16타일 32x32 걷기2 */
-#define TID_PLAYER_DEAD 560  /* 32타일 64x32 사망  */
-#define TID_CAT_WHITE   592  /*  8타일 16x32 */
-#define TID_CAT_BROWN   600  /*  8타일 16x32 */
-#define TID_CAT_SIT     608  /*  8타일 16x32 */
-#define TID_ITEM_HP     616  /*  4타일 16x16 */
-#define TID_ITEM_BOMB   620  /*  4타일 16x16 */
-#define TID_ITEM_POISON 624  /*  4타일 16x16 */
-#define TID_ITEM_SPEED  628  /*  4타일 16x16 */
-#define TID_EXPLOSION   632  /* 16타일 32x32 */
-#define TID_FACE_HAPPY  648  /* 16타일 32x32 */
-#define TID_FACE_NORMAL 664  /* 16타일 32x32 */
-#define TID_FACE_HURT   680  /* 16타일 32x32 */
-#define TID_FACE_DEAD   696  /* 16타일 32x32 */
-#define TID_FONT        712  /* 0~9 숫자 (10타일) */
+/* 원본 스프라이트 사이즈: 스케일링 없이 OAM 캔버스에 패딩 */
+#define TID_PLAYER_W0   512  /* 32타일 32x64 걷기0 (원본 30x53) */
+#define TID_PLAYER_W1   544  /* 32타일 32x64 걷기1 (원본 27x56) */
+#define TID_PLAYER_W2   576  /* 32타일 32x64 걷기2 (원본 27x58) */
+#define TID_PLAYER_DEAD 608  /* 32타일 64x32 사망  (원본 54x25) */
+#define TID_CAT_WHITE   640  /* 16타일 32x32 (원본 17x32) */
+#define TID_CAT_BROWN   656  /* 16타일 32x32 */
+#define TID_CAT_SIT     672  /* 16타일 32x32 (원본 17x32) */
+#define TID_ITEM_HP     688  /* 16타일 32x32 (원본 20x22) */
+#define TID_ITEM_BOMB   704  /* 16타일 32x32 */
+#define TID_ITEM_POISON 720  /* 16타일 32x32 */
+#define TID_ITEM_SPEED  736  /* 16타일 32x32 */
+#define TID_EXPLOSION   752  /* 16타일 32x32 (원본 29x26) */
+#define TID_FACE_HAPPY  768  /* 16타일 32x32 */
+#define TID_FACE_NORMAL 784  /* 16타일 32x32 */
+#define TID_FACE_HURT   800  /* 16타일 32x32 */
+#define TID_FACE_DEAD   816  /* 16타일 32x32 */
+#define TID_FONT        832  /* 0~9 숫자 (10타일) */
 
 /* ── OBJ 팔레트 뱅크 ── */
 #define PB_PLAYER       0
@@ -56,8 +57,13 @@
 /* 배경 타입 상수 (title 추가) */
 #define BG_TITLE_SCREEN 0xFF
 
-/* 플레이어 렌더 Y (화면 하단) */
-#define PLAYER_RENDER_Y (SCREEN_H - 32)
+/* 플레이어 렌더 Y (화면 하단, 32x64 OAM) */
+#define PLAYER_RENDER_Y (SCREEN_H - 64)
+
+/* 렌더 오프셋 (원본→OAM 패딩 보정) */
+#define CAT_RENDER_OX   7   /* (32-17)/2 = 7.5 → 7 */
+#define ITEM_RENDER_OX  6   /* (32-20)/2 = 6 */
+#define ITEM_RENDER_OY  10  /* 32-22 = 10 (하단정렬 top padding) */
 
 /* HUD 좌표 (상단 좌측 오버레이) */
 #define HUD_FACE_X      0

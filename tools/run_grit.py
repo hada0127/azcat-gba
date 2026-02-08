@@ -44,32 +44,31 @@ def main():
     run_grit('bg_matrix.png', 'bg_matrix', bg_opts)
 
     # 스프라이트 (OAM, 4bpp 타일)
-    # -gB4: 4bpp, -Mh4: metatile 4 high (32x32→4 tiles high)
-    # -gt: tile mode, -gT!: transparent color = first pixel (or magenta)
-    # -p: palette, -ftc: C output
+    # -gB4: 4bpp, -gt: tile mode, -gTFF00FF: 마젠타 투명
+    # -pn16: 16색 팔레트, -p: palette, -ftc: C output
     print("\n[스프라이트 4bpp]")
-    # 플레이어 걷기 32x32 + 사망 64x32
-    spr32_opts = ['-gB4', '-gt', '-gTFF00FF', '-pn16', '-p', '-ftc']
-    run_grit('spr_player_walk0.png', 'spr_player_walk0', spr32_opts)
-    run_grit('spr_player_walk1.png', 'spr_player_walk1', spr32_opts)
-    run_grit('spr_player_walk2.png', 'spr_player_walk2', spr32_opts)
-    run_grit('spr_player_dead.png', 'spr_player_dead', spr32_opts)
+    spr_opts = ['-gB4', '-gt', '-gTFF00FF', '-pn16', '-p', '-ftc']
+    # 플레이어 걷기 32x64 + 사망 64x32
+    run_grit('spr_player_walk0.png', 'spr_player_walk0', spr_opts)
+    run_grit('spr_player_walk1.png', 'spr_player_walk1', spr_opts)
+    run_grit('spr_player_walk2.png', 'spr_player_walk2', spr_opts)
+    run_grit('spr_player_dead.png', 'spr_player_dead', spr_opts)
+    # 고양이 32x32
+    run_grit('spr_cat_white.png', 'spr_cat_white', spr_opts)
+    run_grit('spr_cat_brown.png', 'spr_cat_brown', spr_opts)
+    run_grit('spr_cat_sit.png', 'spr_cat_sit', spr_opts)
+    # 아이템 32x32
+    run_grit('spr_item_hp.png', 'spr_item_hp', spr_opts)
+    run_grit('spr_item_bomb.png', 'spr_item_bomb', spr_opts)
+    run_grit('spr_item_poison.png', 'spr_item_poison', spr_opts)
+    run_grit('spr_item_speed.png', 'spr_item_speed', spr_opts)
     # 폭발 32x32
-    run_grit('spr_explosion.png', 'spr_explosion', spr32_opts)
-
-    # 16x16 스프라이트
-    spr16_opts = ['-gB4', '-gt', '-gTFF00FF', '-pn16', '-p', '-ftc']
-    run_grit('spr_cat_white.png', 'spr_cat_white', spr16_opts)
-    run_grit('spr_cat_brown.png', 'spr_cat_brown', spr16_opts)
-    run_grit('spr_cat_sit.png', 'spr_cat_sit', spr16_opts)
-    run_grit('spr_item_hp.png', 'spr_item_hp', spr16_opts)
-    run_grit('spr_item_bomb.png', 'spr_item_bomb', spr16_opts)
-    run_grit('spr_item_poison.png', 'spr_item_poison', spr16_opts)
-    run_grit('spr_item_speed.png', 'spr_item_speed', spr16_opts)
-    run_grit('spr_face_happy.png', 'spr_face_happy', spr32_opts)
-    run_grit('spr_face_normal.png', 'spr_face_normal', spr32_opts)
-    run_grit('spr_face_hurt.png', 'spr_face_hurt', spr32_opts)
-    run_grit('spr_face_dead.png', 'spr_face_dead', spr32_opts)
+    run_grit('spr_explosion.png', 'spr_explosion', spr_opts)
+    # 얼굴 32x32 (HUD)
+    run_grit('spr_face_happy.png', 'spr_face_happy', spr_opts)
+    run_grit('spr_face_normal.png', 'spr_face_normal', spr_opts)
+    run_grit('spr_face_hurt.png', 'spr_face_hurt', spr_opts)
+    run_grit('spr_face_dead.png', 'spr_face_dead', spr_opts)
 
     # 폰트 (4bpp 타일, 8x8 per char)
     print("\n[폰트 4bpp]")
