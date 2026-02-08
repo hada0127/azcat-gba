@@ -5,7 +5,7 @@
 """
 import os
 import sys
-from PIL import Image, ImageDraw, ImageFont, ImageEnhance
+from PIL import Image, ImageDraw, ImageFont, ImageEnhance, ImageFilter
 
 SRC = os.path.join(os.path.dirname(__file__), '..', 'export', 'images')
 GFX = os.path.join(os.path.dirname(__file__), '..', 'graphics')
@@ -286,7 +286,8 @@ def convert_grade_images():
     print(f"  -> {dst_path} ({os.path.getsize(dst_path)} bytes)")
 
 def create_nav_text():
-    """네비게이션 텍스트 "◀타이틀" / "재도전▶" 비트맵 생성 → data/nav_text.h"""
+    """네비게이션 텍스트 비트맵 생성 → data/nav_text.h
+    흰색 글씨 + 검정 테두리 (등급 이미지와 동일 스타일)"""
     dst_path = os.path.join(DATA, 'nav_text.h')
 
     NAV_W = 80
@@ -294,11 +295,10 @@ def create_nav_text():
     texts = ['B 타이틀', '재도전 A']
     names = ['nav_title', 'nav_retry']
 
-    # Windows 맑은고딕
     font = None
     font_paths = [
-        'C:/Windows/Fonts/malgun.ttf',
         'C:/Windows/Fonts/malgunbd.ttf',
+        'C:/Windows/Fonts/malgun.ttf',
     ]
     for fp in font_paths:
         if os.path.exists(fp):
@@ -319,7 +319,6 @@ def create_nav_text():
     for idx, (text, name) in enumerate(zip(texts, names)):
         im = Image.new('L', (NAV_W, NAV_H), 0)
         draw = ImageDraw.Draw(im)
-        # 텍스트 크기 측정 후 중앙 정렬
         bbox = draw.textbbox((0, 0), text, font=font)
         tw = bbox[2] - bbox[0]
         th = bbox[3] - bbox[1]
@@ -327,19 +326,23 @@ def create_nav_text():
         ty = (NAV_H - th) // 2 - bbox[1]
         draw.text((tx, ty), text, fill=255, font=font)
 
-        # 2레벨 데이터 추출: 2=코어, 1=엣지, 0=투명
+        # 팽창으로 검정 테두리 생성
+        dilated = im.filter(ImageFilter.MaxFilter(3))
+
+        # 0=투명, 1=흰색(코어), 2=검정(테두리)
         pixels = []
         for y in range(NAV_H):
             for x in range(NAV_W):
                 v = im.getpixel((x, y))
-                if v > 180:
-                    pixels.append(2)
-                elif v > 60:
-                    pixels.append(1)
+                d = dilated.getpixel((x, y))
+                if v > 128:
+                    pixels.append(1)  # 흰색 코어
+                elif d > 64:
+                    pixels.append(2)  # 검정 테두리
                 else:
-                    pixels.append(0)
+                    pixels.append(0)  # 투명
 
-        lines.append(f'/* "{text}" {NAV_W}x{NAV_H}, 8bpp (0=투명,1=엣지,2=코어) */')
+        lines.append(f'/* "{text}" {NAV_W}x{NAV_H} (0=투명,1=흰색,2=검정) */')
         lines.append(f'static const unsigned char {name}_data[{NAV_W * NAV_H}] = {{')
         for row in range(NAV_H):
             start = row * NAV_W
@@ -351,6 +354,78 @@ def create_nav_text():
         print(f"  NAV: \"{text}\" -> {name} ({NAV_W}x{NAV_H})")
 
     lines.append('#endif /* NAV_TEXT_DATA_H */')
+
+    with open(dst_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines) + '\n')
+    print(f"  -> {dst_path} ({os.path.getsize(dst_path)} bytes)")
+
+
+def create_score_digits():
+    """점수 숫자 0~9 (큰 사이즈, 흰색 + 검정 테두리) → data/score_digits.h"""
+    dst_path = os.path.join(DATA, 'score_digits.h')
+
+    DIGIT_W = 12  # 짝수 정렬 필수
+    DIGIT_H = 18
+
+    font = None
+    font_paths = [
+        'C:/Windows/Fonts/malgunbd.ttf',
+        'C:/Windows/Fonts/malgun.ttf',
+    ]
+    for fp in font_paths:
+        if os.path.exists(fp):
+            font = ImageFont.truetype(fp, 16)
+            break
+    if font is None:
+        font = ImageFont.load_default()
+
+    lines = []
+    lines.append('#ifndef SCORE_DIGITS_H')
+    lines.append('#define SCORE_DIGITS_H')
+    lines.append('')
+    lines.append(f'#define SCORE_DIGIT_W {DIGIT_W}')
+    lines.append(f'#define SCORE_DIGIT_H {DIGIT_H}')
+    lines.append('')
+    lines.append(f'/* 숫자 0~9 (0=투명,1=흰색,2=검정) */')
+    lines.append(f'static const unsigned char score_digit_data[10][{DIGIT_W * DIGIT_H}] = {{')
+
+    for d in range(10):
+        text = str(d)
+        im = Image.new('L', (DIGIT_W, DIGIT_H), 0)
+        draw = ImageDraw.Draw(im)
+        bbox = draw.textbbox((0, 0), text, font=font)
+        tw = bbox[2] - bbox[0]
+        th = bbox[3] - bbox[1]
+        tx = (DIGIT_W - tw) // 2 - bbox[0]
+        ty = (DIGIT_H - th) // 2 - bbox[1]
+        draw.text((tx, ty), text, fill=255, font=font)
+
+        dilated = im.filter(ImageFilter.MaxFilter(3))
+
+        pixels = []
+        for y in range(DIGIT_H):
+            for x in range(DIGIT_W):
+                v = im.getpixel((x, y))
+                dd = dilated.getpixel((x, y))
+                if v > 128:
+                    pixels.append(1)  # 흰색 코어
+                elif dd > 64:
+                    pixels.append(2)  # 검정 테두리
+                else:
+                    pixels.append(0)  # 투명
+
+        lines.append(f'    {{ /* {d} */')
+        for row in range(DIGIT_H):
+            start = row * DIGIT_W
+            row_data = pixels[start:start + DIGIT_W]
+            hex_str = ','.join(f'{b}' for b in row_data)
+            lines.append(f'        {hex_str},')
+        lines.append('    },')
+        print(f"  DIGIT: {d} ({DIGIT_W}x{DIGIT_H})")
+
+    lines.append('};')
+    lines.append('')
+    lines.append('#endif /* SCORE_DIGITS_H */')
 
     with open(dst_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines) + '\n')
@@ -395,6 +470,10 @@ def main():
     # 등급 이미지
     print("\n[등급 이미지]")
     convert_grade_images()
+
+    # 점수 숫자 (게임오버용 큰 사이즈)
+    print("\n[점수 숫자]")
+    create_score_digits()
 
     # 네비게이션 텍스트
     print("\n[네비게이션 텍스트]")

@@ -90,6 +90,7 @@ int main(void) {
                 go_input_delay = 30; /* 0.5초 입력 무시 */
                 render_darken_bg_palette();
                 render_gameover_grade(go_result.grade_index);
+                render_gameover_score(gs.score);
                 render_gameover_nav();
                 render_gameover_screen(&gs, &go_result);
                 break;
