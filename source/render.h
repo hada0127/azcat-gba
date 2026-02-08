@@ -8,15 +8,15 @@
 #include "gameover.h"
 
 /* ── OAM 슬롯 할당 (낮은 인덱스 = 앞에 표시) ── */
-/* 레이어: UI > 히트이펙트 > 플레이어 > 아이템 > 고양이 */
+/* 레이어: UI > 히트이펙트 > 아이템 > 고양이 > 플레이어 */
 #define OAM_FACE        0
 #define OAM_SCORE_START 1   /* 1-5: 5자리 점수 */
 #define OAM_BOMB_ICON   6   /* 폭탄 보유 표시 */
 #define OAM_HIT_START   7   /* 7-10: 충돌 이펙트 (최대 4개) */
 #define OAM_HIT_COUNT   4
-#define OAM_PLAYER      11
-#define OAM_ITEM        12
-#define OAM_CAT_START   13  /* 13-45: 고양이 33마리 */
+#define OAM_ITEM        11
+#define OAM_CAT_START   12  /* 12-44: 고양이 33마리 */
+#define OAM_PLAYER      45
 #define OAM_COUNT       46
 
 /* ── OBJ 타일 ID (Mode 4: 512부터) ── */
