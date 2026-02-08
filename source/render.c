@@ -401,7 +401,7 @@ void render_gameover_score(s16 score) {
     }
 }
 
-/* ── 게임오버 화면: 스프라이트 정지 + UI는 BG 위에 표시 ── */
+/* ── 게임오버 화면: 스프라이트 반투명 + UI는 프레임버퍼에 표시 ── */
 void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
     int i;
 
@@ -413,14 +413,11 @@ void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
     for (i = 0; i < OAM_HIT_COUNT; i++)
         obj_hide(&obj_buffer[OAM_HIT_START + i]);
 
-    /* 게임플레이 스프라이트를 BG 아래로 (OBJ priority 1 > BG priority 0) */
-    obj_buffer[OAM_PLAYER].attr2 =
-        (obj_buffer[OAM_PLAYER].attr2 & 0xF3FF) | ATTR2_PRIO(1);
-    obj_buffer[OAM_ITEM].attr2 =
-        (obj_buffer[OAM_ITEM].attr2 & 0xF3FF) | ATTR2_PRIO(1);
+    /* 게임플레이 스프라이트를 반투명으로 (ATTR0_BLEND, 비트10) */
+    obj_buffer[OAM_PLAYER].attr0 |= ATTR0_BLEND;
+    obj_buffer[OAM_ITEM].attr0 |= ATTR0_BLEND;
     for (i = 0; i < MAX_CATS; i++)
-        obj_buffer[OAM_CAT_START + i].attr2 =
-            (obj_buffer[OAM_CAT_START + i].attr2 & 0xF3FF) | ATTR2_PRIO(1);
+        obj_buffer[OAM_CAT_START + i].attr0 |= ATTR0_BLEND;
 }
 
 /* ── 모든 스프라이트 숨기기 ── */

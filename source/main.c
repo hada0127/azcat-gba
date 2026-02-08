@@ -46,6 +46,9 @@ int main(void) {
         /* VBlank 중: OAM 갱신 + 페이지 전환 */
         render_oam_update();
 
+        /* 사운드 업데이트 */
+        sound_update();
+
         /* 입력 폴링 */
         key_poll();
         u16 kd = key_curr_state();
@@ -66,12 +69,18 @@ int main(void) {
                 game_play_init(&gs);
                 prev_bg = 0xFF; /* 강제 BG 로드 */
                 prev_state = STATE_PLAY;
+                sound_play_bgm(0);
             }
             break;
 
         /* ── 플레이 ── */
-        case STATE_PLAY:
+        case STATE_PLAY: {
+            u8 prev_life = gs.player.life;
             game_play_update(&gs, kd, kp);
+
+            /* 피격 효과음 */
+            if (gs.player.life < prev_life && gs.state == STATE_PLAY)
+                sound_play_sfx(SFX_HIT);
 
             /* 배경 전환 감지 */
             if (gs.bg_type != prev_bg && !bomb_is_active(&gs.bomb)) {
@@ -99,10 +108,11 @@ int main(void) {
                 }
                 prev_state = STATE_GAMEOVER;
                 go_input_delay = 30; /* 0.5초 입력 무시 */
+                sound_play_sfx(SFX_GAMEOVER);
                 render_darken_bg_palette();
-                /* 알파 블렌딩: BG2(프레임버퍼)를 1st, OBJ를 2nd로 반투명 합성 */
-                REG_BLDCNT = BLD_BUILD(BLD_BG2, BLD_OBJ, BLD_STD);
-                REG_BLDALPHA = BLDA_BUILD(12, 8);
+                /* 알파 블렌딩: OBJ(스프라이트)를 1st, BG2(프레임버퍼)를 2nd */
+                REG_BLDCNT = BLD_BUILD(BLD_OBJ, BLD_BG2, BLD_STD);
+                REG_BLDALPHA = BLDA_BUILD(8, 16);
                 render_gameover_grade(go_result.grade_index);
                 render_gameover_score(gs.score);
                 render_gameover_nav();
@@ -112,7 +122,7 @@ int main(void) {
 
             render_sprites(&gs);
             render_hud(&gs);
-            break;
+            } break;
 
         /* ── 게임오버 ── */
         case STATE_GAMEOVER:
@@ -126,6 +136,7 @@ int main(void) {
                 u8 next = gameover_update(kp);
                 if (next == STATE_TITLE) {
                     REG_BLDCNT = 0;  /* 블렌딩 해제 */
+                    sound_stop();
                     gs.state = STATE_TITLE;
                     prev_state = 0xFF; /* 타이틀 재진입 트리거 */
                 } else if (next == STATE_PLAY) {
@@ -134,6 +145,7 @@ int main(void) {
                     prev_bg = 0xFF;
                     prev_state = STATE_PLAY;
                     render_hide_all();
+                    sound_play_bgm(0);
                 }
             }
             break;

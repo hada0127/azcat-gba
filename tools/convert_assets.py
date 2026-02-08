@@ -70,11 +70,13 @@ def pad_original(im, target_size, valign='bottom'):
     result.paste(im, (ox, oy))
     return result
 
-def convert_sprite(src_name, dst_name, size, transparent_bg=True, use_original=True, valign='bottom'):
+def convert_sprite(src_name, dst_name, size, transparent_bg=True, use_original=True, valign='bottom', crop_bottom=0):
     """스프라이트 변환 (4bpp, 16색). use_original=True면 원본 사이즈 유지(패딩만)"""
     src_path = os.path.join(SRC, src_name)
     dst_path = os.path.join(GFX, dst_name)
     im = Image.open(src_path).convert('RGBA')
+    if crop_bottom > 0:
+        im = im.crop((0, 0, im.width, im.height - crop_bottom))
     if use_original:
         im = pad_original(im, size, valign=valign)
     else:
@@ -478,11 +480,11 @@ def main():
     convert_sprite('43.png', 'spr_item_speed.png', (32, 32))    # i4: 스피드업
     # 폭발 32x32 (원본 29x26)
     convert_sprite('52.png', 'spr_explosion.png', (32, 32))
-    # 캐릭터 얼굴 32x64 TALL (HUD용, 원본 83x100 → 상단 정렬)
-    convert_sprite('28.png', 'spr_face_happy.png', (32, 64), use_original=False, valign='top')
-    convert_sprite('30.png', 'spr_face_normal.png', (32, 64), use_original=False, valign='top')
-    convert_sprite('32.png', 'spr_face_hurt.png', (32, 64), use_original=False, valign='top')
-    convert_sprite('34.png', 'spr_face_dead.png', (32, 64), use_original=False, valign='top')
+    # 캐릭터 얼굴 32x64 TALL (HUD용, 원본 83x100 → 하단 20px 크롭 → 상단 정렬)
+    convert_sprite('28.png', 'spr_face_happy.png', (32, 64), use_original=False, valign='top', crop_bottom=20)
+    convert_sprite('30.png', 'spr_face_normal.png', (32, 64), use_original=False, valign='top', crop_bottom=20)
+    convert_sprite('32.png', 'spr_face_hurt.png', (32, 64), use_original=False, valign='top', crop_bottom=20)
+    convert_sprite('34.png', 'spr_face_dead.png', (32, 64), use_original=False, valign='top', crop_bottom=20)
 
     # 폰트
     print("\n[폰트]")
