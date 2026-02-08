@@ -119,9 +119,9 @@ int main(void) {
                 go_input_delay = 30; /* 0.5초 입력 무시 */
                 sound_play_sfx(SFX_GAMEOVER);
                 render_darken_bg_palette();
-                /* 알파 블렌딩: OBJ(스프라이트)를 1st, BG2(프레임버퍼)를 2nd */
-                REG_BLDCNT = BLD_BUILD(BLD_OBJ, BLD_BG2, BLD_STD);
-                REG_BLDALPHA = BLDA_BUILD(8, 16);
+                /* 알파 블렌딩: BG2(dim 오버레이)를 1st, OBJ(스프라이트)를 2nd */
+                REG_BLDCNT = BLD_BUILD(BLD_BG2, BLD_OBJ, BLD_STD);
+                REG_BLDALPHA = BLDA_BUILD(10, 6);
                 render_gameover_grade(go_result.grade_index);
                 render_gameover_score(gs.score);
                 render_gameover_nav();
