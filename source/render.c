@@ -271,47 +271,15 @@ void render_darken_bg_palette(void) {
     }
 }
 
-/* ── 프레임버퍼 영역 채우기 (Mode 4, 짝수 좌표) ── */
-#define PANEL_PAL_IDX 253  /* 어두운 패널 팔레트 인덱스 */
-
-static void render_fill_rect(int rx, int ry, int rw, int rh, u8 pal_idx) {
-    u16* page0 = (u16*)0x06000000;
-    u16* page1 = (u16*)0x0600A000;
-    u16 fill = (pal_idx << 8) | pal_idx;
-    int y, x;
-
-    /* 짝수 정렬 */
-    rx &= ~1;
-    rw = (rw + 1) & ~1;
-
-    for (y = 0; y < rh; y++) {
-        int row = ry + y;
-        if (row < 0 || row >= SCREEN_H) continue;
-        u16* dst0 = &page0[row * (SCREEN_W / 2)];
-        u16* dst1 = &page1[row * (SCREEN_W / 2)];
-        for (x = 0; x < rw; x += 2) {
-            int px = rx + x;
-            if (px < 0 || px >= SCREEN_W) continue;
-            int idx = px / 2;
-            dst0[idx] = fill;
-            dst1[idx] = fill;
-        }
-    }
-}
-
 /* ── 등급 이미지를 프레임버퍼에 블릿 (Mode 4, 8bpp) ── */
 #define GRADE_PAL_IDX 255  /* 등급 텍스트용 팔레트 인덱스 */
 
 void render_gameover_grade(u8 grade_index) {
     if (grade_index >= GRADE_COUNT) return;
 
-    /* 패널/텍스트 팔레트 설정 */
-    pal_bg_mem[PANEL_PAL_IDX] = RGB15(2, 2, 4);   /* 거의 검정 */
-    pal_bg_mem[GRADE_PAL_IDX] = RGB15(31, 31, 31); /* 흰색 */
-
-    /* 어두운 배경 패널 (등급~네비 전체 영역) */
-    render_fill_rect(20, GO_GRADE_Y - 6, SCREEN_W - 40,
-                     GO_NAV_Y + NAV_TEXT_HEIGHT - GO_GRADE_Y + 12, PANEL_PAL_IDX);
+    /* 팔레트 설정: 코어=흰색, 엣지=반투명 회색 */
+    pal_bg_mem[GRADE_PAL_IDX] = RGB15(31, 31, 31);       /* 코어 (흰) */
+    pal_bg_mem[GRADE_PAL_IDX - 1] = RGB15(18, 18, 20);   /* 엣지 (회색) */
 
     const unsigned char* src = grade_image_data[grade_index];
     int ox = (SCREEN_W - GRADE_IMG_W) / 2;
@@ -329,13 +297,16 @@ void render_gameover_grade(u8 grade_index) {
         for (x = 0; x < GRADE_IMG_W; x += 2) {
             int px = ox + x;
             if (px >= SCREEN_W - 1) break;
-            u8 lo = src[y * GRADE_IMG_W + x] ? GRADE_PAL_IDX : 0;
-            u8 hi = src[y * GRADE_IMG_W + x + 1] ? GRADE_PAL_IDX : 0;
-            if (lo || hi) {
+            u8 v_lo = src[y * GRADE_IMG_W + x];
+            u8 v_hi = src[y * GRADE_IMG_W + x + 1];
+            if (v_lo || v_hi) {
                 int idx = px / 2;
-                u8 final_lo = lo ? lo : PANEL_PAL_IDX;
-                u8 final_hi = hi ? hi : PANEL_PAL_IDX;
-                u16 val = (final_hi << 8) | final_lo;
+                u16 old = dst0[idx];
+                u8 lo = (v_lo == 2) ? GRADE_PAL_IDX :
+                         (v_lo == 1) ? (GRADE_PAL_IDX - 1) : (u8)(old & 0xFF);
+                u8 hi = (v_hi == 2) ? GRADE_PAL_IDX :
+                         (v_hi == 1) ? (GRADE_PAL_IDX - 1) : (u8)(old >> 8);
+                u16 val = (hi << 8) | lo;
                 dst0[idx] = val;
                 dst1[idx] = val;
             }
@@ -347,17 +318,17 @@ void render_gameover_grade(u8 grade_index) {
 #define NAV_PAL_IDX 254  /* 밝은 회색 */
 
 void render_gameover_nav(void) {
-    /* 팔레트 인덱스 254에 밝은 회색 설정 */
-    pal_bg_mem[NAV_PAL_IDX] = RGB15(22, 22, 22);
+    /* 네비 텍스트 팔레트: 코어=밝은 회색, 엣지=중간 회색 */
+    pal_bg_mem[NAV_PAL_IDX] = RGB15(25, 25, 27);        /* 코어 */
+    pal_bg_mem[NAV_PAL_IDX - 1] = RGB15(14, 14, 16);    /* 엣지 */
 
     u16* page0 = (u16*)0x06000000;
     u16* page1 = (u16*)0x0600A000;
 
-    /* "◀타이틀" 왼쪽, "재도전▶" 오른쪽 */
     const unsigned char* srcs[2] = { nav_title_data, nav_retry_data };
     int offsets_x[2] = {
-        SCREEN_W / 4 - NAV_TEXT_W / 2,         /* 좌측 1/4 */
-        SCREEN_W * 3 / 4 - NAV_TEXT_W / 2      /* 우측 3/4 */
+        SCREEN_W / 4 - NAV_TEXT_W / 2,
+        SCREEN_W * 3 / 4 - NAV_TEXT_W / 2
     };
 
     int n, y, x;
@@ -372,14 +343,16 @@ void render_gameover_nav(void) {
             for (x = 0; x < NAV_TEXT_W; x += 2) {
                 int px = ox + x;
                 if (px < 0 || px >= SCREEN_W - 1) continue;
-                u8 lo = src[y * NAV_TEXT_W + x] ? NAV_PAL_IDX : 0;
-                u8 hi = src[y * NAV_TEXT_W + x + 1] ? NAV_PAL_IDX : 0;
-                if (lo || hi) {
+                u8 v_lo = src[y * NAV_TEXT_W + x];
+                u8 v_hi = src[y * NAV_TEXT_W + x + 1];
+                if (v_lo || v_hi) {
                     int idx = px / 2;
                     u16 old = dst0[idx];
-                    u8 final_lo = lo ? lo : (u8)(old & 0xFF);
-                    u8 final_hi = hi ? hi : (u8)(old >> 8);
-                    u16 val = (final_hi << 8) | final_lo;
+                    u8 lo = (v_lo == 2) ? NAV_PAL_IDX :
+                             (v_lo == 1) ? (NAV_PAL_IDX - 1) : (u8)(old & 0xFF);
+                    u8 hi = (v_hi == 2) ? NAV_PAL_IDX :
+                             (v_hi == 1) ? (NAV_PAL_IDX - 1) : (u8)(old >> 8);
+                    u16 val = (hi << 8) | lo;
                     dst0[idx] = val;
                     dst1[idx] = val;
                 }

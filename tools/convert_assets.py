@@ -243,17 +243,22 @@ def convert_grade_images():
         padded = Image.new('RGBA', (IMG_W, IMG_H), (0, 0, 0, 0))
         padded.paste(im, (0, 0))
 
-        # 8bpp 인덱스 데이터 생성: 불투명 픽셀=1, 투명=0
+        # 8bpp 인덱스 데이터 생성: 2=코어, 1=엣지, 0=투명
         pixels = []
         for y in range(IMG_H):
             for x in range(IMG_W):
                 r, g, b, a = padded.getpixel((x, y))
-                pixels.append(1 if a > 128 else 0)
+                if a > 200:
+                    pixels.append(2)
+                elif a > 80:
+                    pixels.append(1)
+                else:
+                    pixels.append(0)
         all_data.append(pixels)
         print(f"  GRADE: {img_num}.png -> index {gi}")
 
     # 전체 데이터를 하나의 배열로 합치기
-    lines.append(f'/* 등급 이미지 {GRADE_COUNT}개, {IMG_W}x{IMG_H}, 8bpp 인덱스(0/1) */')
+    lines.append(f'/* 등급 이미지 {GRADE_COUNT}개, {IMG_W}x{IMG_H}, 8bpp (0=투명,1=엣지,2=코어) */')
     lines.append(f'static const unsigned char grade_image_data[{GRADE_COUNT}][{IMG_W * IMG_H}] = {{')
     for gi in range(GRADE_COUNT):
         lines.append(f'    {{ /* grade {gi} (img {123-gi*2}) */')
@@ -314,13 +319,19 @@ def create_nav_text():
         ty = (NAV_H - th) // 2 - bbox[1]
         draw.text((tx, ty), text, fill=255, font=font)
 
-        # 1bpp 데이터 추출
+        # 2레벨 데이터 추출: 2=코어, 1=엣지, 0=투명
         pixels = []
         for y in range(NAV_H):
             for x in range(NAV_W):
-                pixels.append(1 if im.getpixel((x, y)) > 128 else 0)
+                v = im.getpixel((x, y))
+                if v > 180:
+                    pixels.append(2)
+                elif v > 60:
+                    pixels.append(1)
+                else:
+                    pixels.append(0)
 
-        lines.append(f'/* "{text}" {NAV_W}x{NAV_H}, 8bpp index(0/1) */')
+        lines.append(f'/* "{text}" {NAV_W}x{NAV_H}, 8bpp (0=투명,1=엣지,2=코어) */')
         lines.append(f'static const unsigned char {name}_data[{NAV_W * NAV_H}] = {{')
         for row in range(NAV_H):
             start = row * NAV_W
