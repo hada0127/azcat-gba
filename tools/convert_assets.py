@@ -272,6 +272,72 @@ def convert_grade_images():
         f.write('\n'.join(lines) + '\n')
     print(f"  -> {dst_path} ({os.path.getsize(dst_path)} bytes)")
 
+def create_nav_text():
+    """네비게이션 텍스트 "◀타이틀" / "재도전▶" 비트맵 생성 → data/nav_text.h"""
+    dst_path = os.path.join(DATA, 'nav_text.h')
+
+    NAV_W = 80
+    NAV_H = 15
+    texts = ['\u25c0타이틀', '재도전\u25b6']
+    names = ['nav_title', 'nav_retry']
+
+    # Windows 맑은고딕
+    font = None
+    font_paths = [
+        'C:/Windows/Fonts/malgun.ttf',
+        'C:/Windows/Fonts/malgunbd.ttf',
+    ]
+    for fp in font_paths:
+        if os.path.exists(fp):
+            font = ImageFont.truetype(fp, 12)
+            break
+    if font is None:
+        font = ImageFont.load_default()
+        print("  WARNING: malgun.ttf not found, using default font")
+
+    lines = []
+    lines.append('#ifndef NAV_TEXT_DATA_H')
+    lines.append('#define NAV_TEXT_DATA_H')
+    lines.append('')
+    lines.append(f'#define NAV_TEXT_W {NAV_W}')
+    lines.append(f'#define NAV_TEXT_HEIGHT {NAV_H}')
+    lines.append('')
+
+    for idx, (text, name) in enumerate(zip(texts, names)):
+        im = Image.new('L', (NAV_W, NAV_H), 0)
+        draw = ImageDraw.Draw(im)
+        # 텍스트 크기 측정 후 중앙 정렬
+        bbox = draw.textbbox((0, 0), text, font=font)
+        tw = bbox[2] - bbox[0]
+        th = bbox[3] - bbox[1]
+        tx = (NAV_W - tw) // 2 - bbox[0]
+        ty = (NAV_H - th) // 2 - bbox[1]
+        draw.text((tx, ty), text, fill=255, font=font)
+
+        # 1bpp 데이터 추출
+        pixels = []
+        for y in range(NAV_H):
+            for x in range(NAV_W):
+                pixels.append(1 if im.getpixel((x, y)) > 128 else 0)
+
+        lines.append(f'/* "{text}" {NAV_W}x{NAV_H}, 8bpp index(0/1) */')
+        lines.append(f'static const unsigned char {name}_data[{NAV_W * NAV_H}] = {{')
+        for row in range(NAV_H):
+            start = row * NAV_W
+            row_data = pixels[start:start + NAV_W]
+            hex_str = ','.join(f'{b}' for b in row_data)
+            lines.append(f'    {hex_str},')
+        lines.append('};')
+        lines.append('')
+        print(f"  NAV: \"{text}\" -> {name} ({NAV_W}x{NAV_H})")
+
+    lines.append('#endif /* NAV_TEXT_DATA_H */')
+
+    with open(dst_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines) + '\n')
+    print(f"  -> {dst_path} ({os.path.getsize(dst_path)} bytes)")
+
+
 def main():
     print("=== 에셋 변환 시작 ===\n")
 
@@ -310,6 +376,10 @@ def main():
     # 등급 이미지
     print("\n[등급 이미지]")
     convert_grade_images()
+
+    # 네비게이션 텍스트
+    print("\n[네비게이션 텍스트]")
+    create_nav_text()
 
     print("\n=== 변환 완료 ===")
     print(f"graphics/ 에 저장됨. 이후 grit으로 data/*.c 생성 필요.")

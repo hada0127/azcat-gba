@@ -28,6 +28,7 @@
 #include "spr_face_dead.h"
 #include "font_numbers.h"
 #include "grade_images.h"
+#include "nav_text.h"
 
 /* OAM 섀도우 버퍼 */
 static OBJ_ATTR obj_buffer[128];
@@ -258,6 +259,18 @@ void render_title_hud(s16 hiscore) {
     obj_hide(&obj_buffer[OAM_BOMB_ICON]);
 }
 
+/* ── 배경 팔레트 어둡게 (밝기 50%) ── */
+void render_darken_bg_palette(void) {
+    int i;
+    for (i = 0; i < 256; i++) {
+        u16 c = pal_bg_mem[i];
+        u16 r = (c & 0x1F) >> 1;
+        u16 g = ((c >> 5) & 0x1F) >> 1;
+        u16 b = ((c >> 10) & 0x1F) >> 1;
+        pal_bg_mem[i] = r | (g << 5) | (b << 10);
+    }
+}
+
 /* ── 등급 이미지를 프레임버퍼에 블릿 (Mode 4, 8bpp) ── */
 #define GRADE_PAL_IDX 255  /* 등급 텍스트용 팔레트 인덱스 */
 
@@ -268,9 +281,9 @@ void render_gameover_grade(u8 grade_index) {
     pal_bg_mem[GRADE_PAL_IDX] = RGB15(31, 31, 31);
 
     const unsigned char* src = grade_image_data[grade_index];
-    /* 화면 중앙 배치 */
+    /* 화면 중앙 상단 배치 */
     int ox = (SCREEN_W - GRADE_IMG_W) / 2;
-    int oy = SCREEN_H / 2 + 10;
+    int oy = GO_GRADE_Y;
 
     u16* page0 = (u16*)0x06000000;
     u16* page1 = (u16*)0x0600A000;
@@ -300,14 +313,58 @@ void render_gameover_grade(u8 grade_index) {
     }
 }
 
-/* ── 게임오버 화면 ── */
-void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
-    /* 게임 스프라이트 유지 (프리즈 상태) */
-    /* 얼굴: 사망 → 상단 좌측 */
-    render_face(0);  /* life=0 → 사망 얼굴 */
+/* ── 네비 텍스트를 프레임버퍼에 블릿 ── */
+#define NAV_PAL_IDX 254  /* 밝은 회색 */
 
-    /* 최종 점수 → 얼굴 옆 */
-    render_digits(gs->score, OAM_SCORE_START, HUD_SCORE_X, HUD_SCORE_Y);
+void render_gameover_nav(void) {
+    /* 팔레트 인덱스 254에 밝은 회색 설정 */
+    pal_bg_mem[NAV_PAL_IDX] = RGB15(22, 22, 22);
+
+    u16* page0 = (u16*)0x06000000;
+    u16* page1 = (u16*)0x0600A000;
+
+    /* "◀타이틀" 왼쪽, "재도전▶" 오른쪽 */
+    const unsigned char* srcs[2] = { nav_title_data, nav_retry_data };
+    int offsets_x[2] = {
+        SCREEN_W / 4 - NAV_TEXT_W / 2,         /* 좌측 1/4 */
+        SCREEN_W * 3 / 4 - NAV_TEXT_W / 2      /* 우측 3/4 */
+    };
+
+    int n, y, x;
+    for (n = 0; n < 2; n++) {
+        const unsigned char* src = srcs[n];
+        int ox = offsets_x[n];
+        for (y = 0; y < NAV_TEXT_HEIGHT; y++) {
+            int row = GO_NAV_Y + y;
+            if (row >= SCREEN_H) break;
+            u16* dst0 = &page0[row * (SCREEN_W / 2)];
+            u16* dst1 = &page1[row * (SCREEN_W / 2)];
+            for (x = 0; x < NAV_TEXT_W; x += 2) {
+                int px = ox + x;
+                if (px < 0 || px >= SCREEN_W - 1) continue;
+                u8 lo = src[y * NAV_TEXT_W + x] ? NAV_PAL_IDX : 0;
+                u8 hi = src[y * NAV_TEXT_W + x + 1] ? NAV_PAL_IDX : 0;
+                if (lo || hi) {
+                    int idx = px / 2;
+                    u16 old = dst0[idx];
+                    u8 final_lo = lo ? lo : (u8)(old & 0xFF);
+                    u8 final_hi = hi ? hi : (u8)(old >> 8);
+                    u16 val = (final_hi << 8) | final_lo;
+                    dst0[idx] = val;
+                    dst1[idx] = val;
+                }
+            }
+        }
+    }
+}
+
+/* ── 게임오버 화면 (OAM 설정) ── */
+void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
+    /* 얼굴 숨김 (GBA에는 사이드패널 없음) */
+    obj_hide(&obj_buffer[OAM_FACE]);
+
+    /* 점수를 화면 중앙에 표시 */
+    render_digits(gs->score, OAM_SCORE_START, GO_SCORE_X, GO_SCORE_Y);
 
     /* 폭탄 아이콘 숨김 */
     obj_hide(&obj_buffer[OAM_BOMB_ICON]);

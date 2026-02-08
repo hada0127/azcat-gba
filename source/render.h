@@ -57,6 +57,12 @@
 /* 배경 타입 상수 (title 추가) */
 #define BG_TITLE_SCREEN 0xFF
 
+/* 게임오버 레이아웃 좌표 */
+#define GO_GRADE_Y      45
+#define GO_SCORE_X      ((SCREEN_W - 40) / 2)
+#define GO_SCORE_Y      75
+#define GO_NAV_Y        100
+
 /* 플레이어 렌더 Y (화면 하단, 32x64 OAM) */
 #define PLAYER_RENDER_Y (SCREEN_H - 64)
 
@@ -81,6 +87,8 @@ void render_hud(const GameState* gs);
 void render_title_hud(s16 hiscore);
 void render_gameover_screen(const GameState* gs, const GameOverResult* result);
 void render_gameover_grade(u8 grade_index);
+void render_gameover_nav(void);
+void render_darken_bg_palette(void);
 void render_hide_all(void);
 void render_oam_update(void);
 
