@@ -18,17 +18,13 @@ PLAY_AREA_W = 180  # 게임 영역 너비 (오른쪽 60px = UI 패널)
 UI_PANEL_COLOR = (40, 40, 56)  # 어두운 남색 UI 패널
 
 def convert_bg(src_name, dst_name, size=(240, 160)):
-    """배경 이미지 변환: 게임 영역(좌 180px) + UI 패널(우 60px)"""
+    """배경 이미지 변환: 전체 화면 리사이즈"""
     src_path = os.path.join(SRC, src_name)
     dst_path = os.path.join(GFX, dst_name)
     im = Image.open(src_path).convert('RGB')
-    # 게임 영역 크기로 리사이즈
-    game_bg = im.resize((PLAY_AREA_W, size[1]), Image.LANCZOS)
-    # 전체 캔버스: 게임 배경 + 오른쪽 UI 패널
-    result = Image.new('RGB', size, UI_PANEL_COLOR)
-    result.paste(game_bg, (0, 0))
+    result = im.resize(size, Image.LANCZOS)
     result.save(dst_path)
-    print(f"  BG: {src_name} -> {dst_name} ({size[0]}x{size[1]}, play={PLAY_AREA_W})")
+    print(f"  BG: {src_name} -> {dst_name} ({size[0]}x{size[1]})")
     return dst_path
 
 def resize_preserve_aspect(im, target_size):
@@ -270,6 +266,8 @@ def main():
     # 고양이 16x32 (48.png = 낙하 중 고양이, tall OAM)
     convert_sprite('48.png', 'spr_cat_white.png', (16, 32))
     convert_sprite('48.png', 'spr_cat_brown.png', (16, 32))
+    # 고양이 앉은 자세 16x16 (41.png)
+    convert_sprite('41.png', 'spr_cat_sit.png', (16, 16))
     # 아이템 16x16 (37=HP업, 43=폭탄)
     convert_sprite('37.png', 'spr_item_hp.png', (16, 16))
     convert_sprite('43.png', 'spr_item_bomb.png', (16, 16))

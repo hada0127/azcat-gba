@@ -67,15 +67,19 @@ u8 cats_update(Cat cats[], u16 score, s32 player_x,
                 (*score_add)++;
             }
         } else if (cats[i].state == CAT_STATE_SIT) {
-            /* 착지 후 잠시 체류 → 리스폰 */
+            /* 착지 후 잠시 체류 → 퇴장 */
             cats[i].v_accel++;
             if (cats[i].v_accel >= CAT_SIT_FRAMES) {
-                if ((u8)i < cat_qty) {
-                    cat_spawn(&cats[i]);
-                } else {
-                    cats[i].state = CAT_STATE_INACTIVE;
-                    cats[i].y = FP(200);
-                }
+                cats[i].state = CAT_STATE_EXIT;
+                cats[i].v_accel = 0;
+            }
+        } else if (cats[i].state == CAT_STATE_EXIT) {
+            /* 아래로 퇴장 */
+            cats[i].y += CAT_BASE_FALL + cats[i].v_accel;
+            cats[i].v_accel += CAT_GRAVITY;
+            if (cats[i].y > FP(200)) {
+                cats[i].state = CAT_STATE_INACTIVE;
+                cats[i].y = FP(200);
             }
         }
     }

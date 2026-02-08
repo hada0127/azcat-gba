@@ -61,6 +61,7 @@ def main():
     spr16_opts = ['-gB4', '-gt', '-gTFF00FF', '-pn16', '-p', '-ftc']
     run_grit('spr_cat_white.png', 'spr_cat_white', spr16_opts)
     run_grit('spr_cat_brown.png', 'spr_cat_brown', spr16_opts)
+    run_grit('spr_cat_sit.png', 'spr_cat_sit', spr16_opts)
     run_grit('spr_item_hp.png', 'spr_item_hp', spr16_opts)
     run_grit('spr_item_bomb.png', 'spr_item_bomb', spr16_opts)
     run_grit('spr_face_happy.png', 'spr_face_happy', spr16_opts)

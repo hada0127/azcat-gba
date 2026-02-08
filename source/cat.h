@@ -6,6 +6,7 @@
 #define CAT_STATE_INACTIVE 0
 #define CAT_STATE_FALLING  1
 #define CAT_STATE_SIT      2
+#define CAT_STATE_EXIT     3
 
 typedef struct {
     s32 x;

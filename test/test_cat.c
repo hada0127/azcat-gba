@@ -113,19 +113,31 @@ void test_cats_qty_increases_with_score(void) {
     TEST_ASSERT_TRUE(active <= 6);
 }
 
-void test_cats_sit_respawn(void) {
+void test_cats_sit_to_exit(void) {
     srand(42);
     cats_init(cats);
     /* 고양이를 착지 상태로 (체류 거의 완료) */
     cats[0].state = CAT_STATE_SIT;
     cats[0].x = FP(100);
     cats[0].y = CAT_LAND_Y;
-    cats[0].v_accel = CAT_SIT_FRAMES - 1;  /* 다음 프레임에 리스폰 */
+    cats[0].v_accel = CAT_SIT_FRAMES - 1;
     s16 score_add = 0;
-    /* score=10 → cat_qty=3, 인덱스 0은 리스폰 */
     cats_update(cats, 10, FP(-100), false, &score_add);
-    TEST_ASSERT_EQUAL_INT(CAT_STATE_FALLING, cats[0].state);
-    TEST_ASSERT_TRUE(cats[0].y < CAT_LAND_Y);
+    /* SIT → EXIT 전환 */
+    TEST_ASSERT_EQUAL_INT(CAT_STATE_EXIT, cats[0].state);
+}
+
+void test_cats_exit_falls_off(void) {
+    cats_init(cats);
+    /* 고양이를 EXIT 상태로, 화면 밖 직전 */
+    cats[0].state = CAT_STATE_EXIT;
+    cats[0].x = FP(100);
+    cats[0].y = FP(199);
+    cats[0].v_accel = FP(10);
+    s16 score_add = 0;
+    cats_update(cats, 10, FP(-100), false, &score_add);
+    /* 화면 밖으로 나가면 INACTIVE */
+    TEST_ASSERT_EQUAL_INT(CAT_STATE_INACTIVE, cats[0].state);
 }
 
 void test_cats_max_count(void) {
@@ -165,7 +177,8 @@ int run_cat_tests(void) {
     RUN_TEST(test_cats_no_collision_far_away);
     RUN_TEST(test_cats_bomb_clears_all);
     RUN_TEST(test_cats_qty_increases_with_score);
-    RUN_TEST(test_cats_sit_respawn);
+    RUN_TEST(test_cats_sit_to_exit);
+    RUN_TEST(test_cats_exit_falls_off);
     RUN_TEST(test_cats_max_count);
     RUN_TEST(test_cats_inactive_above_qty);
     return UNITY_END();

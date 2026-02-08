@@ -16,6 +16,7 @@
 #include "spr_player_dead.h"
 #include "spr_cat_white.h"
 #include "spr_cat_brown.h"
+#include "spr_cat_sit.h"
 #include "spr_item_hp.h"
 #include "spr_item_bomb.h"
 #include "spr_explosion.h"
@@ -42,19 +43,21 @@ void render_init(void) {
     memcpy32(&tile_mem[5][48],  spr_player_deadTiles,  spr_player_deadTilesLen / 4);  /* 560: 32타일 */
     memcpy32(&tile_mem[5][80],  spr_cat_whiteTiles,    spr_cat_whiteTilesLen / 4);    /* 592: 8타일 */
     memcpy32(&tile_mem[5][88],  spr_cat_brownTiles,    spr_cat_brownTilesLen / 4);    /* 600: 8타일 */
-    memcpy32(&tile_mem[5][96],  spr_item_hpTiles,      spr_item_hpTilesLen / 4);     /* 608: 4타일 */
-    memcpy32(&tile_mem[5][100], spr_item_bombTiles,    spr_item_bombTilesLen / 4);    /* 612: 4타일 */
-    memcpy32(&tile_mem[5][104], spr_explosionTiles,    spr_explosionTilesLen / 4);    /* 616: 16타일 */
-    memcpy32(&tile_mem[5][120], spr_face_happyTiles,   spr_face_happyTilesLen / 4);  /* 632: 4타일 */
-    memcpy32(&tile_mem[5][124], spr_face_normalTiles,  spr_face_normalTilesLen / 4);  /* 636 */
-    memcpy32(&tile_mem[5][128], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);    /* 640 */
-    memcpy32(&tile_mem[5][132], spr_face_deadTiles,    spr_face_deadTilesLen / 4);    /* 644 */
-    memcpy32(&tile_mem[5][136], font_numbersTiles,     font_numbersTilesLen / 4);     /* 648 */
+    memcpy32(&tile_mem[5][96],  spr_cat_sitTiles,      spr_cat_sitTilesLen / 4);      /* 608: 4타일 */
+    memcpy32(&tile_mem[5][100], spr_item_hpTiles,      spr_item_hpTilesLen / 4);     /* 612: 4타일 */
+    memcpy32(&tile_mem[5][104], spr_item_bombTiles,    spr_item_bombTilesLen / 4);    /* 616: 4타일 */
+    memcpy32(&tile_mem[5][108], spr_explosionTiles,    spr_explosionTilesLen / 4);    /* 620: 16타일 */
+    memcpy32(&tile_mem[5][124], spr_face_happyTiles,   spr_face_happyTilesLen / 4);  /* 636: 4타일 */
+    memcpy32(&tile_mem[5][128], spr_face_normalTiles,  spr_face_normalTilesLen / 4);  /* 640 */
+    memcpy32(&tile_mem[5][132], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);    /* 644 */
+    memcpy32(&tile_mem[5][136], spr_face_deadTiles,    spr_face_deadTilesLen / 4);    /* 648 */
+    memcpy32(&tile_mem[5][140], font_numbersTiles,     font_numbersTilesLen / 4);     /* 652 */
 
     /* OBJ 팔레트 로드 (walk0 팔레트 = 공유 팔레트) */
     memcpy16(pal_obj_bank[PB_PLAYER],      spr_player_walk0Pal, spr_player_walk0PalLen / 2);
     memcpy16(pal_obj_bank[PB_CAT_WHITE],   spr_cat_whitePal,   spr_cat_whitePalLen / 2);
     memcpy16(pal_obj_bank[PB_CAT_BROWN],   spr_cat_brownPal,   spr_cat_brownPalLen / 2);
+    memcpy16(pal_obj_bank[PB_CAT_SIT],     spr_cat_sitPal,     spr_cat_sitPalLen / 2);
     memcpy16(pal_obj_bank[PB_ITEM_HP],     spr_item_hpPal,     spr_item_hpPalLen / 2);
     memcpy16(pal_obj_bank[PB_ITEM_BOMB],   spr_item_bombPal,   spr_item_bombPalLen / 2);
     memcpy16(pal_obj_bank[PB_EXPLOSION],   spr_explosionPal,   spr_explosionPalLen / 2);
@@ -130,7 +133,18 @@ void render_sprites(const GameState* gs) {
     /* 고양이 */
     for (i = 0; i < MAX_CATS; i++) {
         int oam = OAM_CAT_START + i;
-        if (gs->cats[i].state != CAT_STATE_INACTIVE) {
+        if (gs->cats[i].state == CAT_STATE_SIT) {
+            /* 착지: 16x16 앉은 스프라이트 */
+            int cx = FP_TO_INT(gs->cats[i].x);
+            int cy = FP_TO_INT(gs->cats[i].y) + 16; /* 바닥 맞춤 */
+            obj_set_attr(&obj_buffer[oam],
+                ATTR0_SQUARE | ATTR0_4BPP,
+                ATTR1_SIZE_16,
+                ATTR2_PALBANK(PB_CAT_SIT) | ATTR2_ID(TID_CAT_SIT));
+            obj_set_pos(&obj_buffer[oam], cx, cy);
+        } else if (gs->cats[i].state == CAT_STATE_FALLING ||
+                   gs->cats[i].state == CAT_STATE_EXIT) {
+            /* 낙하/퇴장: 16x32 낙하 스프라이트 */
             int cx = FP_TO_INT(gs->cats[i].x);
             int cy = FP_TO_INT(gs->cats[i].y);
             u16 tid = (i & 1) ? TID_CAT_BROWN : TID_CAT_WHITE;
