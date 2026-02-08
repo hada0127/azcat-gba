@@ -271,15 +271,16 @@ void render_darken_bg_palette(void) {
     }
 }
 
-/* ── 등급 이미지를 프레임버퍼에 블릿 (Mode 4, 8bpp) ── */
-#define GRADE_PAL_IDX 255  /* 등급 텍스트용 팔레트 인덱스 */
+/* ── 등급 이미지를 프레임버퍼에 블릿 (Mode 4, 팔레트 인덱싱) ── */
+#define GRADE_PAL_BASE 244  /* BG 팔레트 시작 오프셋 */
 
 void render_gameover_grade(u8 grade_index) {
     if (grade_index >= GRADE_COUNT) return;
+    int i;
 
-    /* 팔레트 설정: 코어=흰색, 엣지=반투명 회색 */
-    pal_bg_mem[GRADE_PAL_IDX] = RGB15(31, 31, 31);       /* 코어 (흰) */
-    pal_bg_mem[GRADE_PAL_IDX - 1] = RGB15(18, 18, 20);   /* 엣지 (회색) */
+    /* 등급 공유 팔레트를 BG 팔레트에 로드 */
+    for (i = 0; i < GRADE_PAL_COUNT; i++)
+        pal_bg_mem[GRADE_PAL_BASE + i] = grade_palette[i];
 
     const unsigned char* src = grade_image_data[grade_index];
     int ox = (SCREEN_W - GRADE_IMG_W) / 2;
@@ -299,28 +300,25 @@ void render_gameover_grade(u8 grade_index) {
             if (px >= SCREEN_W - 1) break;
             u8 v_lo = src[y * GRADE_IMG_W + x];
             u8 v_hi = src[y * GRADE_IMG_W + x + 1];
-            if (v_lo || v_hi) {
-                int idx = px / 2;
-                u16 old = dst0[idx];
-                u8 lo = (v_lo == 2) ? GRADE_PAL_IDX :
-                         (v_lo == 1) ? (GRADE_PAL_IDX - 1) : (u8)(old & 0xFF);
-                u8 hi = (v_hi == 2) ? GRADE_PAL_IDX :
-                         (v_hi == 1) ? (GRADE_PAL_IDX - 1) : (u8)(old >> 8);
-                u16 val = (hi << 8) | lo;
-                dst0[idx] = val;
-                dst1[idx] = val;
-            }
+            int idx = px / 2;
+            /* 0=투명(배경유지), 1~N=팔레트색 */
+            u16 old = dst0[idx];
+            u8 lo = v_lo ? (u8)(GRADE_PAL_BASE + v_lo - 1) : (u8)(old & 0xFF);
+            u8 hi = v_hi ? (u8)(GRADE_PAL_BASE + v_hi - 1) : (u8)(old >> 8);
+            u16 val = (hi << 8) | lo;
+            dst0[idx] = val;
+            dst1[idx] = val;
         }
     }
 }
 
 /* ── 네비 텍스트를 프레임버퍼에 블릿 ── */
-#define NAV_PAL_IDX 254  /* 밝은 회색 */
+#define NAV_PAL_CORE 243  /* 코어 색상 */
+#define NAV_PAL_EDGE 242  /* 엣지 색상 */
 
 void render_gameover_nav(void) {
-    /* 네비 텍스트 팔레트: 코어=밝은 회색, 엣지=중간 회색 */
-    pal_bg_mem[NAV_PAL_IDX] = RGB15(25, 25, 27);        /* 코어 */
-    pal_bg_mem[NAV_PAL_IDX - 1] = RGB15(14, 14, 16);    /* 엣지 */
+    pal_bg_mem[NAV_PAL_CORE] = RGB15(25, 25, 27);    /* 코어 (밝은 회색) */
+    pal_bg_mem[NAV_PAL_EDGE] = RGB15(14, 14, 16);    /* 엣지 (중간 회색) */
 
     u16* page0 = (u16*)0x06000000;
     u16* page1 = (u16*)0x0600A000;
@@ -348,10 +346,10 @@ void render_gameover_nav(void) {
                 if (v_lo || v_hi) {
                     int idx = px / 2;
                     u16 old = dst0[idx];
-                    u8 lo = (v_lo == 2) ? NAV_PAL_IDX :
-                             (v_lo == 1) ? (NAV_PAL_IDX - 1) : (u8)(old & 0xFF);
-                    u8 hi = (v_hi == 2) ? NAV_PAL_IDX :
-                             (v_hi == 1) ? (NAV_PAL_IDX - 1) : (u8)(old >> 8);
+                    u8 lo = (v_lo == 2) ? NAV_PAL_CORE :
+                             (v_lo == 1) ? NAV_PAL_EDGE : (u8)(old & 0xFF);
+                    u8 hi = (v_hi == 2) ? NAV_PAL_CORE :
+                             (v_hi == 1) ? NAV_PAL_EDGE : (u8)(old >> 8);
                     u16 val = (hi << 8) | lo;
                     dst0[idx] = val;
                     dst1[idx] = val;

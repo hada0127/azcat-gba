@@ -215,50 +215,58 @@ def draw_digit(draw, x, y, digit):
                 draw.point((ox + col, oy + row), fill=(255, 255, 255))
 
 def convert_grade_images():
-    """등급 이미지 21개를 1bpp C 배열로 변환 → data/grade_images.h"""
+    """등급 이미지 21개를 원본 색상으로 변환 → data/grade_images.h
+    알파 채널로 투명 구분, 불투명 픽셀은 흰색/검정 2색 분류"""
     dst_path = os.path.join(DATA, 'grade_images.h')
 
-    # grade_index 순서: 0=d100(img 123), 1=d10(121), ..., 20=g10(83)
     GRADE_COUNT = 21
-    IMG_W = 72  # 71 → 72 (8의 배수로 패딩, Mode 4 편의)
+    IMG_W = 72  # 71 → 72 (짝수 정렬)
     IMG_H = 15
+    PAL_COLORS = 2  # 흰색 + 검정
 
+    # GBA RGB15: 0=흰색, 1=검정
+    pal_rgb15 = [0x7FFF, 0x0000]
+
+    all_data = []
+    for gi in range(GRADE_COUNT):
+        img_num = 123 - gi * 2
+        src_path = os.path.join(SRC, f'{img_num}.png')
+        im = Image.open(src_path).convert('RGBA')
+
+        # IMG_W x IMG_H 캔버스에 패딩 (원본 71x15 → 72x15)
+        canvas = Image.new('RGBA', (IMG_W, IMG_H), (0, 0, 0, 0))
+        canvas.paste(im, (0, 0))
+
+        # 알파 기반 분류: 0=투명, 1=흰색, 2=검정
+        pixels = []
+        for r, g, b, a in canvas.getdata():
+            if a <= 64:
+                pixels.append(0)  # 투명
+            elif r + g + b > 384:  # 밝은 색 (흰색 계열)
+                pixels.append(1)  # 팔레트 0 = 흰색
+            else:
+                pixels.append(2)  # 팔레트 1 = 검정
+        all_data.append(pixels)
+        print(f"  GRADE: {img_num}.png -> index {gi}")
+
+    # C 헤더 출력
     lines = []
     lines.append('#ifndef GRADE_IMAGES_H')
     lines.append('#define GRADE_IMAGES_H')
     lines.append('')
     lines.append(f'#define GRADE_IMG_W {IMG_W}')
     lines.append(f'#define GRADE_IMG_H {IMG_H}')
+    lines.append(f'#define GRADE_PAL_COUNT {PAL_COLORS}')
     lines.append('')
 
-    row_bytes = IMG_W  # 8bpp: 1바이트/픽셀
-    all_data = []
+    # 공유 팔레트 (GBA RGB15)
+    lines.append('/* 등급 이미지 팔레트: 0=흰색, 1=검정 */')
+    pal_str = ', '.join(f'0x{v:04X}' for v in pal_rgb15)
+    lines.append(f'static const unsigned short grade_palette[{PAL_COLORS}] = {{ {pal_str} }};')
+    lines.append('')
 
-    for gi in range(GRADE_COUNT):
-        img_num = 123 - gi * 2
-        src_path = os.path.join(SRC, f'{img_num}.png')
-        im = Image.open(src_path).convert('RGBA')
-
-        # 72xH로 리사이즈 (원본 71x15 → 72x15, 오른쪽 1px 패딩)
-        padded = Image.new('RGBA', (IMG_W, IMG_H), (0, 0, 0, 0))
-        padded.paste(im, (0, 0))
-
-        # 8bpp 인덱스 데이터 생성: 2=코어, 1=엣지, 0=투명
-        pixels = []
-        for y in range(IMG_H):
-            for x in range(IMG_W):
-                r, g, b, a = padded.getpixel((x, y))
-                if a > 200:
-                    pixels.append(2)
-                elif a > 80:
-                    pixels.append(1)
-                else:
-                    pixels.append(0)
-        all_data.append(pixels)
-        print(f"  GRADE: {img_num}.png -> index {gi}")
-
-    # 전체 데이터를 하나의 배열로 합치기
-    lines.append(f'/* 등급 이미지 {GRADE_COUNT}개, {IMG_W}x{IMG_H}, 8bpp (0=투명,1=엣지,2=코어) */')
+    # 픽셀 데이터 (0=투명, 1=흰색, 2=검정)
+    lines.append(f'/* 등급 이미지 {GRADE_COUNT}개, {IMG_W}x{IMG_H} (0=투명, 1=흰색, 2=검정) */')
     lines.append(f'static const unsigned char grade_image_data[{GRADE_COUNT}][{IMG_W * IMG_H}] = {{')
     for gi in range(GRADE_COUNT):
         lines.append(f'    {{ /* grade {gi} (img {123-gi*2}) */')
