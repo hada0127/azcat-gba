@@ -80,6 +80,7 @@
 
 void render_init(void);
 void render_set_bg(u8 bg_type);
+void render_set_bomb_bg(void);
 void render_set_title_bg(void);
 void render_sprites(const GameState* gs);
 void render_hud(const GameState* gs);

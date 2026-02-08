@@ -439,6 +439,7 @@ def main():
     print("[배경]")
     convert_bg('8.jpg', 'bg_title.png')  # 타이틀: 전체 리사이즈 (UI 패널 없음)
     day_path = convert_bg('74.jpg', 'bg_day.png', crop_ui=True)   # 게임: UI 패널 크롭
+    convert_bg('10.jpg', 'bg_bomb.png', crop_ui=True)            # 폭탄 전체화면 이펙트
     convert_bg('69.jpg', 'bg_night.png', crop_ui=True)
     convert_bg('71.jpg', 'bg_matrix.png', crop_ui=True)
 

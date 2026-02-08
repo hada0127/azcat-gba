@@ -10,6 +10,7 @@
 #include "bg_day.h"
 #include "bg_night.h"
 #include "bg_matrix.h"
+#include "bg_bomb.h"
 #include "spr_player_walk0.h"
 #include "spr_player_walk1.h"
 #include "spr_player_walk2.h"
@@ -95,6 +96,12 @@ void render_set_bg(u8 bg_type) {
     /* 양쪽 페이지에 복사 (Mode 4 더블버퍼) */
     memcpy32((void*)0x06000000, bmp, bmp_len / 4);
     memcpy32((void*)0x0600A000, bmp, bmp_len / 4);
+}
+
+void render_set_bomb_bg(void) {
+    memcpy16(pal_bg_mem, bg_bombPal, 256);
+    memcpy32((void*)0x06000000, bg_bombBitmap, bg_bombBitmapLen / 4);
+    memcpy32((void*)0x0600A000, bg_bombBitmap, bg_bombBitmapLen / 4);
 }
 
 void render_set_title_bg(void) {
@@ -186,16 +193,8 @@ void render_sprites(const GameState* gs) {
         obj_hide(&obj_buffer[OAM_ITEM]);
     }
 
-    /* 폭탄 이펙트 */
-    if (bomb_is_active(&gs->bomb)) {
-        obj_set_attr(&obj_buffer[OAM_EXPLOSION],
-            ATTR0_SQUARE | ATTR0_4BPP,
-            ATTR1_SIZE_32,
-            ATTR2_PALBANK(PB_EXPLOSION) | ATTR2_ID(TID_EXPLOSION));
-        obj_set_pos(&obj_buffer[OAM_EXPLOSION], (SCREEN_W - 32) / 2, 64);
-    } else {
-        obj_hide(&obj_buffer[OAM_EXPLOSION]);
-    }
+    /* 폭탄 이펙트는 BG로 처리 (main.c에서 render_set_bomb_bg 호출) */
+    obj_hide(&obj_buffer[OAM_EXPLOSION]);
 }
 
 /* ── 숫자 5자리를 OAM으로 표시 ── */

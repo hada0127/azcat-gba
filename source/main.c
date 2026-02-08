@@ -34,6 +34,7 @@ int main(void) {
     u8 prev_bg = 0xFF;
     u8 prev_state = 0xFF;
     u8 go_input_delay = 0;  /* 게임오버 입력 딜레이 */
+    u8 prev_bomb = 0;       /* 폭탄 BG 전환 추적 */
 
     /* 타이틀 배경 세팅 */
     render_set_title_bg();
@@ -59,7 +60,6 @@ int main(void) {
                 render_hide_all();
                 prev_state = STATE_TITLE;
             }
-            render_title_hud(gs.hiscore);
             render_oam_update();
 
             if (kp & (KEY_START | KEY_A)) {
@@ -74,9 +74,20 @@ int main(void) {
             game_play_update(&gs, kd, kp);
 
             /* 배경 전환 감지 */
-            if (gs.bg_type != prev_bg) {
+            if (gs.bg_type != prev_bg && !bomb_is_active(&gs.bomb)) {
                 render_set_bg(gs.bg_type);
                 prev_bg = gs.bg_type;
+            }
+
+            /* 폭탄 전체화면 이펙트 */
+            {
+                u8 bomb_now = bomb_is_active(&gs.bomb) ? 1 : 0;
+                if (bomb_now && !prev_bomb) {
+                    render_set_bomb_bg();
+                } else if (!bomb_now && prev_bomb) {
+                    render_set_bg(gs.bg_type);
+                }
+                prev_bomb = bomb_now;
             }
 
             /* 게임오버 진입 감지 */
