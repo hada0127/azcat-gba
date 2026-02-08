@@ -64,6 +64,8 @@ def main():
     run_grit('spr_cat_sit.png', 'spr_cat_sit', spr16_opts)
     run_grit('spr_item_hp.png', 'spr_item_hp', spr16_opts)
     run_grit('spr_item_bomb.png', 'spr_item_bomb', spr16_opts)
+    run_grit('spr_item_poison.png', 'spr_item_poison', spr16_opts)
+    run_grit('spr_item_speed.png', 'spr_item_speed', spr16_opts)
     run_grit('spr_face_happy.png', 'spr_face_happy', spr32_opts)
     run_grit('spr_face_normal.png', 'spr_face_normal', spr32_opts)
     run_grit('spr_face_hurt.png', 'spr_face_hurt', spr32_opts)

@@ -1,9 +1,9 @@
 
-//{{BLOCK(spr_item_bomb)
+//{{BLOCK(spr_item_poison)
 
 //======================================================================
 //
-//	spr_item_bomb, 16x16@4, 
+//	spr_item_poison, 16x16@4, 
 //	Transparent color : FF,00,FF
 //	+ palette 16 entries, not compressed
 //	+ 4 tiles not compressed
@@ -15,15 +15,15 @@
 //
 //======================================================================
 
-#ifndef GRIT_SPR_ITEM_BOMB_H
-#define GRIT_SPR_ITEM_BOMB_H
+#ifndef GRIT_SPR_ITEM_POISON_H
+#define GRIT_SPR_ITEM_POISON_H
 
-#define spr_item_bombTilesLen 128
-extern const unsigned int spr_item_bombTiles[32];
+#define spr_item_poisonTilesLen 128
+extern const unsigned int spr_item_poisonTiles[32];
 
-#define spr_item_bombPalLen 32
-extern const unsigned short spr_item_bombPal[16];
+#define spr_item_poisonPalLen 32
+extern const unsigned short spr_item_poisonPal[16];
 
-#endif // GRIT_SPR_ITEM_BOMB_H
+#endif // GRIT_SPR_ITEM_POISON_H
 
-//}}BLOCK(spr_item_bomb)
+//}}BLOCK(spr_item_poison)

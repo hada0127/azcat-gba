@@ -25,29 +25,33 @@
 #define TID_PLAYER_DEAD 560  /* 32타일 64x32 사망  */
 #define TID_CAT_WHITE   592  /*  8타일 16x32 */
 #define TID_CAT_BROWN   600  /*  8타일 16x32 */
-#define TID_CAT_SIT     608  /*  4타일 16x16 */
-#define TID_ITEM_HP     612  /*  4타일 16x16 */
-#define TID_ITEM_BOMB   616  /*  4타일 16x16 */
-#define TID_EXPLOSION   620  /* 16타일 32x32 */
-#define TID_FACE_HAPPY  636  /* 16타일 32x32 */
-#define TID_FACE_NORMAL 652  /* 16타일 32x32 */
-#define TID_FACE_HURT   668  /* 16타일 32x32 */
-#define TID_FACE_DEAD   684  /* 16타일 32x32 */
-#define TID_FONT        700  /* 0~9 숫자 (10타일) */
+#define TID_CAT_SIT     608  /*  8타일 16x32 */
+#define TID_ITEM_HP     616  /*  4타일 16x16 */
+#define TID_ITEM_BOMB   620  /*  4타일 16x16 */
+#define TID_ITEM_POISON 624  /*  4타일 16x16 */
+#define TID_ITEM_SPEED  628  /*  4타일 16x16 */
+#define TID_EXPLOSION   632  /* 16타일 32x32 */
+#define TID_FACE_HAPPY  648  /* 16타일 32x32 */
+#define TID_FACE_NORMAL 664  /* 16타일 32x32 */
+#define TID_FACE_HURT   680  /* 16타일 32x32 */
+#define TID_FACE_DEAD   696  /* 16타일 32x32 */
+#define TID_FONT        712  /* 0~9 숫자 (10타일) */
 
 /* ── OBJ 팔레트 뱅크 ── */
 #define PB_PLAYER       0
 #define PB_CAT_WHITE    1
 #define PB_CAT_BROWN    2
-#define PB_ITEM_HP      3
-#define PB_ITEM_BOMB    4
-#define PB_EXPLOSION    5
-#define PB_FACE_HAPPY   6
-#define PB_FACE_NORMAL  7
-#define PB_FACE_HURT    8
-#define PB_FACE_DEAD    9
-#define PB_CAT_SIT      11
-#define PB_FONT         12
+#define PB_CAT_SIT      3
+#define PB_ITEM_HP      4
+#define PB_ITEM_BOMB    5
+#define PB_ITEM_POISON  6
+#define PB_ITEM_SPEED   7
+#define PB_EXPLOSION    8
+#define PB_FACE_HAPPY   9
+#define PB_FACE_NORMAL  10
+#define PB_FACE_HURT    11
+#define PB_FACE_DEAD    12
+#define PB_FONT         13
 
 /* 배경 타입 상수 (title 추가) */
 #define BG_TITLE_SCREEN 0xFF

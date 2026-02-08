@@ -266,11 +266,13 @@ def main():
     # 고양이 16x32 (48.png = 낙하 중 고양이, tall OAM)
     convert_sprite('48.png', 'spr_cat_white.png', (16, 32))
     convert_sprite('48.png', 'spr_cat_brown.png', (16, 32))
-    # 고양이 앉은 자세 16x16 (41.png)
-    convert_sprite('41.png', 'spr_cat_sit.png', (16, 16))
-    # 아이템 16x16 (37=HP업, 43=폭탄)
-    convert_sprite('37.png', 'spr_item_hp.png', (16, 16))
-    convert_sprite('43.png', 'spr_item_bomb.png', (16, 16))
+    # 고양이 앉은 자세 16x32 (50.png)
+    convert_sprite('50.png', 'spr_cat_sit.png', (16, 32))
+    # 아이템 16x16
+    convert_sprite('37.png', 'spr_item_hp.png', (16, 16))      # i1: HP 회복
+    convert_sprite('39.png', 'spr_item_bomb.png', (16, 16))     # i2: 폭탄
+    convert_sprite('41.png', 'spr_item_poison.png', (16, 16))   # i3: HP-1
+    convert_sprite('43.png', 'spr_item_speed.png', (16, 16))    # i4: 스피드업
     # 폭발 32x32
     convert_sprite('52.png', 'spr_explosion.png', (32, 32))
     # 캐릭터 얼굴 32x32 (HUD용)

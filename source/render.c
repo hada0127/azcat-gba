@@ -19,6 +19,8 @@
 #include "spr_cat_sit.h"
 #include "spr_item_hp.h"
 #include "spr_item_bomb.h"
+#include "spr_item_poison.h"
+#include "spr_item_speed.h"
 #include "spr_explosion.h"
 #include "spr_face_happy.h"
 #include "spr_face_normal.h"
@@ -43,15 +45,17 @@ void render_init(void) {
     memcpy32(&tile_mem[5][48],  spr_player_deadTiles,  spr_player_deadTilesLen / 4);  /* 560: 32타일 */
     memcpy32(&tile_mem[5][80],  spr_cat_whiteTiles,    spr_cat_whiteTilesLen / 4);    /* 592: 8타일 */
     memcpy32(&tile_mem[5][88],  spr_cat_brownTiles,    spr_cat_brownTilesLen / 4);    /* 600: 8타일 */
-    memcpy32(&tile_mem[5][96],  spr_cat_sitTiles,      spr_cat_sitTilesLen / 4);      /* 608: 4타일 */
-    memcpy32(&tile_mem[5][100], spr_item_hpTiles,      spr_item_hpTilesLen / 4);     /* 612: 4타일 */
-    memcpy32(&tile_mem[5][104], spr_item_bombTiles,    spr_item_bombTilesLen / 4);    /* 616: 4타일 */
-    memcpy32(&tile_mem[5][108], spr_explosionTiles,    spr_explosionTilesLen / 4);    /* 620: 16타일 */
-    memcpy32(&tile_mem[5][124], spr_face_happyTiles,   spr_face_happyTilesLen / 4);  /* 636: 16타일 */
-    memcpy32(&tile_mem[5][140], spr_face_normalTiles,  spr_face_normalTilesLen / 4);  /* 652: 16타일 */
-    memcpy32(&tile_mem[5][156], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);    /* 668: 16타일 */
-    memcpy32(&tile_mem[5][172], spr_face_deadTiles,    spr_face_deadTilesLen / 4);    /* 684: 16타일 */
-    memcpy32(&tile_mem[5][188], font_numbersTiles,     font_numbersTilesLen / 4);     /* 700 */
+    memcpy32(&tile_mem[5][96],  spr_cat_sitTiles,      spr_cat_sitTilesLen / 4);      /* 608: 8타일 */
+    memcpy32(&tile_mem[5][104], spr_item_hpTiles,      spr_item_hpTilesLen / 4);     /* 616: 4타일 */
+    memcpy32(&tile_mem[5][108], spr_item_bombTiles,    spr_item_bombTilesLen / 4);    /* 620: 4타일 */
+    memcpy32(&tile_mem[5][112], spr_item_poisonTiles,  spr_item_poisonTilesLen / 4);  /* 624: 4타일 */
+    memcpy32(&tile_mem[5][116], spr_item_speedTiles,   spr_item_speedTilesLen / 4);   /* 628: 4타일 */
+    memcpy32(&tile_mem[5][120], spr_explosionTiles,    spr_explosionTilesLen / 4);    /* 632: 16타일 */
+    memcpy32(&tile_mem[5][136], spr_face_happyTiles,   spr_face_happyTilesLen / 4);  /* 648: 16타일 */
+    memcpy32(&tile_mem[5][152], spr_face_normalTiles,  spr_face_normalTilesLen / 4);  /* 664: 16타일 */
+    memcpy32(&tile_mem[5][168], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);    /* 680: 16타일 */
+    memcpy32(&tile_mem[5][184], spr_face_deadTiles,    spr_face_deadTilesLen / 4);    /* 696: 16타일 */
+    memcpy32(&tile_mem[5][200], font_numbersTiles,     font_numbersTilesLen / 4);     /* 712 */
 
     /* OBJ 팔레트 로드 (walk0 팔레트 = 공유 팔레트) */
     memcpy16(pal_obj_bank[PB_PLAYER],      spr_player_walk0Pal, spr_player_walk0PalLen / 2);
@@ -60,6 +64,8 @@ void render_init(void) {
     memcpy16(pal_obj_bank[PB_CAT_SIT],     spr_cat_sitPal,     spr_cat_sitPalLen / 2);
     memcpy16(pal_obj_bank[PB_ITEM_HP],     spr_item_hpPal,     spr_item_hpPalLen / 2);
     memcpy16(pal_obj_bank[PB_ITEM_BOMB],   spr_item_bombPal,   spr_item_bombPalLen / 2);
+    memcpy16(pal_obj_bank[PB_ITEM_POISON], spr_item_poisonPal, spr_item_poisonPalLen / 2);
+    memcpy16(pal_obj_bank[PB_ITEM_SPEED],  spr_item_speedPal,  spr_item_speedPalLen / 2);
     memcpy16(pal_obj_bank[PB_EXPLOSION],   spr_explosionPal,   spr_explosionPalLen / 2);
     memcpy16(pal_obj_bank[PB_FACE_HAPPY],  spr_face_happyPal,  spr_face_happyPalLen / 2);
     memcpy16(pal_obj_bank[PB_FACE_NORMAL], spr_face_normalPal, spr_face_normalPalLen / 2);
@@ -134,12 +140,12 @@ void render_sprites(const GameState* gs) {
     for (i = 0; i < MAX_CATS; i++) {
         int oam = OAM_CAT_START + i;
         if (gs->cats[i].state == CAT_STATE_SIT) {
-            /* 착지: 16x16 앉은 스프라이트 */
+            /* 착지: 16x32 앉은 스프라이트 */
             int cx = FP_TO_INT(gs->cats[i].x);
-            int cy = FP_TO_INT(gs->cats[i].y) + 16; /* 바닥 맞춤 */
+            int cy = FP_TO_INT(gs->cats[i].y);
             obj_set_attr(&obj_buffer[oam],
-                ATTR0_SQUARE | ATTR0_4BPP,
-                ATTR1_SIZE_16,
+                ATTR0_TALL | ATTR0_4BPP,
+                ATTR1_SIZE_32,
                 ATTR2_PALBANK(PB_CAT_SIT) | ATTR2_ID(TID_CAT_SIT));
             obj_set_pos(&obj_buffer[oam], cx, cy);
         } else if (gs->cats[i].state == CAT_STATE_FALLING ||
@@ -164,10 +170,11 @@ void render_sprites(const GameState* gs) {
         int ix = FP_TO_INT(gs->item.x);
         int iy = FP_TO_INT(gs->item.y);
         u16 tid, pb;
-        if (gs->item.type == ITEM_TYPE_BOMB) {
-            tid = TID_ITEM_BOMB; pb = PB_ITEM_BOMB;
-        } else {
-            tid = TID_ITEM_HP; pb = PB_ITEM_HP;
+        switch (gs->item.type) {
+        case ITEM_TYPE_BOMB:   tid = TID_ITEM_BOMB;   pb = PB_ITEM_BOMB;   break;
+        case ITEM_TYPE_POISON: tid = TID_ITEM_POISON; pb = PB_ITEM_POISON; break;
+        case ITEM_TYPE_SPEED:  tid = TID_ITEM_SPEED;  pb = PB_ITEM_SPEED;  break;
+        default:               tid = TID_ITEM_HP;     pb = PB_ITEM_HP;     break;
         }
         obj_set_attr(&obj_buffer[OAM_ITEM],
             ATTR0_SQUARE | ATTR0_4BPP,
