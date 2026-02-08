@@ -100,6 +100,9 @@ int main(void) {
                 prev_state = STATE_GAMEOVER;
                 go_input_delay = 30; /* 0.5초 입력 무시 */
                 render_darken_bg_palette();
+                /* 알파 블렌딩: BG2(프레임버퍼)를 1st, OBJ를 2nd로 반투명 합성 */
+                REG_BLDCNT = BLD_BUILD(BLD_BG2, BLD_OBJ, BLD_STD);
+                REG_BLDALPHA = BLDA_BUILD(12, 8);
                 render_gameover_grade(go_result.grade_index);
                 render_gameover_score(gs.score);
                 render_gameover_nav();
@@ -122,9 +125,11 @@ int main(void) {
             {
                 u8 next = gameover_update(kp);
                 if (next == STATE_TITLE) {
+                    REG_BLDCNT = 0;  /* 블렌딩 해제 */
                     gs.state = STATE_TITLE;
                     prev_state = 0xFF; /* 타이틀 재진입 트리거 */
                 } else if (next == STATE_PLAY) {
+                    REG_BLDCNT = 0;  /* 블렌딩 해제 */
                     game_play_init(&gs);
                     prev_bg = 0xFF;
                     prev_state = STATE_PLAY;

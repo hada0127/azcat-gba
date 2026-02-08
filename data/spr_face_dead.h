@@ -3,13 +3,13 @@
 
 //======================================================================
 //
-//	spr_face_dead, 32x32@4, 
+//	spr_face_dead, 32x64@4, 
 //	Transparent color : FF,00,FF
 //	+ palette 16 entries, not compressed
-//	+ 16 tiles not compressed
-//	Total size: 32 + 512 = 544
+//	+ 32 tiles not compressed
+//	Total size: 32 + 1024 = 1056
 //
-//	Time-stamp: 2026-02-08, 13:56:48
+//	Time-stamp: 2026-02-08, 22:41:54
 //	Exported by Cearn's GBA Image Transmogrifier, v0.9.2
 //	( http://www.coranac.com/projects/#grit )
 //
@@ -18,8 +18,8 @@
 #ifndef GRIT_SPR_FACE_DEAD_H
 #define GRIT_SPR_FACE_DEAD_H
 
-#define spr_face_deadTilesLen 512
-extern const unsigned int spr_face_deadTiles[128];
+#define spr_face_deadTilesLen 1024
+extern const unsigned int spr_face_deadTiles[256];
 
 #define spr_face_deadPalLen 32
 extern const unsigned short spr_face_deadPal[16];

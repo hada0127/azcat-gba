@@ -33,7 +33,7 @@ def convert_bg(src_name, dst_name, size=(240, 160), crop_ui=False):
     result.save(dst_path)
     return dst_path
 
-def resize_preserve_aspect(im, target_size):
+def resize_preserve_aspect(im, target_size, valign='bottom'):
     """종횡비 보존 리사이즈 → target_size 내에 센터링, 나머지 투명"""
     tw, th = target_size
     ow, oh = im.size
@@ -43,32 +43,42 @@ def resize_preserve_aspect(im, target_size):
     resized = im.resize((nw, nh), Image.LANCZOS)
     result = Image.new('RGBA', target_size, (0, 0, 0, 0))
     ox = (tw - nw) // 2
-    oy = th - nh  # 하단 정렬 (캐릭터 발이 바닥에 닿도록)
+    if valign == 'top':
+        oy = 0
+    elif valign == 'center':
+        oy = (th - nh) // 2
+    else:  # bottom
+        oy = th - nh
     result.paste(resized, (ox, oy))
     return result
 
-def pad_original(im, target_size):
-    """원본 픽셀 사이즈 유지, OAM 캔버스에 패딩만 (스케일링 없음). 하단 중앙 정렬."""
+def pad_original(im, target_size, valign='bottom'):
+    """원본 픽셀 사이즈 유지, OAM 캔버스에 패딩만 (스케일링 없음)."""
     tw, th = target_size
     ow, oh = im.size
     # 원본이 타겟보다 크면 종횡비 보존 리사이즈 (fallback)
     if ow > tw or oh > th:
-        return resize_preserve_aspect(im, target_size)
+        return resize_preserve_aspect(im, target_size, valign=valign)
     result = Image.new('RGBA', target_size, (0, 0, 0, 0))
     ox = (tw - ow) // 2
-    oy = th - oh  # 하단 정렬
+    if valign == 'top':
+        oy = 0
+    elif valign == 'center':
+        oy = (th - oh) // 2
+    else:  # bottom
+        oy = th - oh
     result.paste(im, (ox, oy))
     return result
 
-def convert_sprite(src_name, dst_name, size, transparent_bg=True, use_original=True):
+def convert_sprite(src_name, dst_name, size, transparent_bg=True, use_original=True, valign='bottom'):
     """스프라이트 변환 (4bpp, 16색). use_original=True면 원본 사이즈 유지(패딩만)"""
     src_path = os.path.join(SRC, src_name)
     dst_path = os.path.join(GFX, dst_name)
     im = Image.open(src_path).convert('RGBA')
     if use_original:
-        im = pad_original(im, size)
+        im = pad_original(im, size, valign=valign)
     else:
-        im = resize_preserve_aspect(im, size)
+        im = resize_preserve_aspect(im, size, valign=valign)
 
     if transparent_bg:
         # 알파 마스크 추출 (임계값 64: 반투명 그림자 보존)
@@ -177,42 +187,52 @@ def convert_player_sprites():
 
 
 def create_number_font():
-    """숫자 0~9 폰트 타일 생성 (8x8 각 글자, 80x8 이미지)"""
+    """숫자 0~9 폰트 타일 생성 (16x16 흰색+검정테두리, 160x16 이미지)"""
     dst_path = os.path.join(GFX, 'font_numbers.png')
-    # 80x8 이미지 (10개 숫자 * 8px)
-    im = Image.new('RGB', (80, 8), (255, 0, 255))
-    draw = ImageDraw.Draw(im)
+    DIGIT_W = 16
+    DIGIT_H = 16
 
-    for i in range(10):
-        x = i * 8
-        # 간단한 비트맵 숫자
-        draw_digit(draw, x, 0, str(i))
+    font = None
+    font_paths = [
+        'C:/Windows/Fonts/malgunbd.ttf',
+        'C:/Windows/Fonts/malgun.ttf',
+    ]
+    for fp in font_paths:
+        if os.path.exists(fp):
+            font = ImageFont.truetype(fp, 13)
+            break
+    if font is None:
+        font = ImageFont.load_default()
 
-    im = im.quantize(colors=16, method=Image.MEDIANCUT)
-    im.save(dst_path)
-    print(f"  FONT: font_numbers.png (80x8)")
+    # 마젠타 배경 (grit 투명)
+    result = Image.new('RGB', (DIGIT_W * 10, DIGIT_H), (255, 0, 255))
+
+    for d in range(10):
+        im = Image.new('L', (DIGIT_W, DIGIT_H), 0)
+        draw = ImageDraw.Draw(im)
+        text = str(d)
+        bbox = draw.textbbox((0, 0), text, font=font)
+        tw = bbox[2] - bbox[0]
+        th = bbox[3] - bbox[1]
+        tx = (DIGIT_W - tw) // 2 - bbox[0]
+        ty = (DIGIT_H - th) // 2 - bbox[1]
+        draw.text((tx, ty), text, fill=255, font=font)
+
+        dilated = im.filter(ImageFilter.MaxFilter(3))
+
+        for y in range(DIGIT_H):
+            for x in range(DIGIT_W):
+                v = im.getpixel((x, y))
+                dd = dilated.getpixel((x, y))
+                px = d * DIGIT_W + x
+                if v > 128:
+                    result.putpixel((px, y), (255, 255, 255))  # 흰색 코어
+                elif dd > 64:
+                    result.putpixel((px, y), (0, 0, 0))  # 검정 테두리
+
+    result.save(dst_path)
+    print(f"  FONT: font_numbers.png ({DIGIT_W * 10}x{DIGIT_H})")
     return dst_path
-
-def draw_digit(draw, x, y, digit):
-    """간단한 3x5 비트맵 숫자 그리기 (8x8 타일 내부, 가운데 정렬)"""
-    patterns = {
-        '0': ['111','101','101','101','111'],
-        '1': ['010','110','010','010','111'],
-        '2': ['111','001','111','100','111'],
-        '3': ['111','001','111','001','111'],
-        '4': ['101','101','111','001','001'],
-        '5': ['111','100','111','001','111'],
-        '6': ['111','100','111','101','111'],
-        '7': ['111','001','001','001','001'],
-        '8': ['111','101','111','101','111'],
-        '9': ['111','101','111','001','111'],
-    }
-    pat = patterns.get(digit, patterns['0'])
-    ox, oy = x + 2, y + 1  # 8x8 타일 내 센터링
-    for row, line in enumerate(pat):
-        for col, ch in enumerate(line):
-            if ch == '1':
-                draw.point((ox + col, oy + row), fill=(255, 255, 255))
 
 def convert_grade_images():
     """등급 이미지 21개를 원본 색상으로 변환 → data/grade_images.h
@@ -458,11 +478,11 @@ def main():
     convert_sprite('43.png', 'spr_item_speed.png', (32, 32))    # i4: 스피드업
     # 폭발 32x32 (원본 29x26)
     convert_sprite('52.png', 'spr_explosion.png', (32, 32))
-    # 캐릭터 얼굴 32x32 (HUD용, 원본 83x100 → OAM 최대 64x64이므로 축소)
-    convert_sprite('28.png', 'spr_face_happy.png', (32, 32), use_original=False)
-    convert_sprite('30.png', 'spr_face_normal.png', (32, 32), use_original=False)
-    convert_sprite('32.png', 'spr_face_hurt.png', (32, 32), use_original=False)
-    convert_sprite('34.png', 'spr_face_dead.png', (32, 32), use_original=False)
+    # 캐릭터 얼굴 32x64 TALL (HUD용, 원본 83x100 → 상단 정렬)
+    convert_sprite('28.png', 'spr_face_happy.png', (32, 64), use_original=False, valign='top')
+    convert_sprite('30.png', 'spr_face_normal.png', (32, 64), use_original=False, valign='top')
+    convert_sprite('32.png', 'spr_face_hurt.png', (32, 64), use_original=False, valign='top')
+    convert_sprite('34.png', 'spr_face_dead.png', (32, 64), use_original=False, valign='top')
 
     # 폰트
     print("\n[폰트]")
