@@ -3,155 +3,127 @@
 #ifdef PLATFORM_GBA
 
 #include <tonc.h>
+#include "snd_bgm.h"
+#include "snd_hit.h"
+#include "snd_bomb.h"
+#include "snd_item.h"
+#include "snd_gameover.h"
 
-/* ── 음계 (rate = 2048 - 131072/Hz) ── */
-#define NOTE_C3  1048
-#define NOTE_G3  1379
-#define NOTE_C4  1548
-#define NOTE_D4  1602
-#define NOTE_E4  1651
-#define NOTE_F4  1672
-#define NOTE_G4  1714
-#define NOTE_A4  1750
-#define NOTE_B4  1783
-#define NOTE_C5  1797
-#define NOTE_D5  1825
-#define NOTE_REST 0
+/* 8192Hz 타이머 값: 65536 - (16777216/8192) = 63488 = 0xF800 */
+#define TIMER_8192HZ    0xF800
 
-/* BGM 노트 간격 (프레임) */
-#define BGM_STEP 10
+/* BGM 총 프레임 수 (8192 samples/sec / 60 fps * 전체 샘플) */
+#define BGM_TOTAL_FRAMES  (SND_BGM_LEN * 60 / 8192)
 
-/* BGM 멜로디 (채널 1) */
-static const u16 bgm_melody[] = {
-    NOTE_E4, NOTE_G4, NOTE_A4, NOTE_G4,
-    NOTE_E4, NOTE_C4, NOTE_D4, NOTE_E4,
-    NOTE_E4, NOTE_G4, NOTE_A4, NOTE_C5,
-    NOTE_A4, NOTE_G4, NOTE_E4, NOTE_REST,
-};
-#define BGM_MELODY_LEN (sizeof(bgm_melody) / sizeof(bgm_melody[0]))
-
-/* BGM 베이스 (채널 2) */
-static const u16 bgm_bass[] = {
-    NOTE_C3, NOTE_REST, NOTE_C3, NOTE_REST,
-    NOTE_C3, NOTE_REST, NOTE_G3, NOTE_REST,
-    NOTE_C3, NOTE_REST, NOTE_C3, NOTE_REST,
-    NOTE_G3, NOTE_REST, NOTE_C3, NOTE_REST,
-};
-#define BGM_BASS_LEN (sizeof(bgm_bass) / sizeof(bgm_bass[0]))
+/* SFX 프레임 계산 매크로 */
+#define SFX_FRAMES(len)   ((len) * 60 / 8192 + 1)
 
 /* 상태 */
 static u8  bgm_on;
-static u16 bgm_tick;
-static u8  bgm_idx;
-static u8  sfx_ch1_lock;   /* SFX가 채널1 점유 중이면 >0 */
+static u32 bgm_frames;
+static u16 sfx_frames_left;
 
 void sound_init(void) {
     /* 마스터 사운드 활성화 */
     REG_SNDSTAT = SSTAT_ENABLE;
 
-    /* DMG 채널 볼륨 최대, 채널 1+2+4 양쪽 스피커 */
-    REG_SNDDMGCNT = SDMG_BUILD_LR(SDMG_SQR1 | SDMG_SQR2 | SDMG_NOISE, 7);
+    /* Direct Sound A+B: 100% 볼륨, 양쪽 스피커, 타이머 0 */
+    REG_SNDDSCNT = SDS_DMG100 | SDS_A100 | SDS_B100
+                 | SDS_AL | SDS_AR | SDS_BL | SDS_BR
+                 | SDS_ATMR0 | SDS_BTMR0;
 
-    /* DMG 채널 100% 볼륨 */
-    REG_SNDDSCNT = SDS_DMG100;
+    /* 타이머 0: 8192Hz */
+    REG_TM0D = TIMER_8192HZ;
+    REG_TM0CNT = TM_ENABLE | TM_FREQ_SYS;
 
     bgm_on = 0;
-    bgm_tick = 0;
-    bgm_idx = 0;
-    sfx_ch1_lock = 0;
-}
-
-static void play_note_ch1(u16 rate) {
-    if (rate == NOTE_REST) {
-        REG_SND1CNT = SSQR_DUTY1_2 | SSQR_IVOL(0);
-        return;
-    }
-    REG_SND1SWEEP = 0;
-    REG_SND1CNT = SSQR_DUTY1_2 | SSQR_IVOL(8);
-    REG_SND1FREQ = SFREQ_RESET | rate;
-}
-
-static void play_note_ch2(u16 rate) {
-    if (rate == NOTE_REST) {
-        REG_SND2CNT = SSQR_DUTY1_4 | SSQR_IVOL(0);
-        return;
-    }
-    REG_SND2CNT = SSQR_DUTY1_4 | SSQR_IVOL(5);
-    REG_SND2FREQ = SFREQ_RESET | rate;
+    bgm_frames = 0;
+    sfx_frames_left = 0;
 }
 
 void sound_play_bgm(u8 track) {
     (void)track;
+
+    /* DMA1 정지 → FIFO A 리셋 → 재시작 */
+    REG_DMA1CNT = 0;
+    REG_SNDDSCNT |= SDS_ARESET;
+
+    REG_DMA1SAD = (u32)snd_bgm_data;
+    REG_DMA1DAD = (u32)&REG_FIFO_A;
+    REG_DMA1CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
+                | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
+
+    bgm_frames = 0;
     bgm_on = 1;
-    bgm_tick = 0;
-    bgm_idx = 0;
 }
 
 void sound_play_sfx(u8 sfx_id) {
+    const void *data = NULL;
+    u32 len = 0;
+
     switch (sfx_id) {
     case SFX_HIT:
-        /* 노이즈 버스트 (채널4) */
-        REG_SND4CNT = SSQR_IVOL(15) | SSQR_DEC | SSQR_TIME(3);
-        REG_SND4FREQ = SFREQ_RESET | (3 << 4);
+        data = snd_hit_data;
+        len = SND_HIT_LEN;
         break;
-
     case SFX_GAMEOVER:
-        /* 하강 스윕 (채널1) — BGM 중지 */
-        bgm_on = 0;
-        REG_SND1SWEEP = SSW_BUILD(4, 1, 3);
-        REG_SND1CNT = SSQR_DUTY1_2 | SSQR_IVOL(12) | SSQR_DEC | SSQR_TIME(1);
-        REG_SND1FREQ = SFREQ_RESET | NOTE_C5;
-        sfx_ch1_lock = 90;
-        /* 베이스도 정지 */
-        REG_SND2CNT = SSQR_IVOL(0);
+        data = snd_gameover_data;
+        len = SND_GAMEOVER_LEN;
+        bgm_on = 0;        /* BGM 정지 */
+        REG_DMA1CNT = 0;
         break;
-
     case SFX_BOMB:
-        /* 폭발 노이즈 (채널4) */
-        REG_SND4CNT = SSQR_IVOL(12) | SSQR_DEC | SSQR_TIME(4);
-        REG_SND4FREQ = SFREQ_RESET | (6 << 4) | 3;
+        data = snd_bomb_data;
+        len = SND_BOMB_LEN;
         break;
-
     case SFX_ITEM:
-        /* 짧은 비프 (채널1) */
-        REG_SND1SWEEP = 0;
-        REG_SND1CNT = SSQR_DUTY1_4 | SSQR_IVOL(10) | SSQR_DEC | SSQR_TIME(2);
-        REG_SND1FREQ = SFREQ_RESET | NOTE_A4;
-        sfx_ch1_lock = 8;
+        data = snd_item_data;
+        len = SND_ITEM_LEN;
         break;
+    default:
+        return;
     }
+
+    /* DMA2 정지 → FIFO B 리셋 → 재시작 */
+    REG_DMA2CNT = 0;
+    REG_SNDDSCNT |= SDS_BRESET;
+
+    REG_DMA2SAD = (u32)data;
+    REG_DMA2DAD = (u32)&REG_FIFO_B;
+    REG_DMA2CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
+                | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
+
+    sfx_frames_left = SFX_FRAMES(len);
 }
 
 void sound_update(void) {
-    /* SFX 채널1 잠금 카운트 */
-    if (sfx_ch1_lock > 0)
-        sfx_ch1_lock--;
-
-    if (!bgm_on) return;
-
-    bgm_tick++;
-    if (bgm_tick >= BGM_STEP) {
-        bgm_tick = 0;
-
-        /* 멜로디 (채널1) — SFX 점유 중이 아니면 */
-        if (sfx_ch1_lock == 0) {
-            play_note_ch1(bgm_melody[bgm_idx % BGM_MELODY_LEN]);
+    /* BGM 루프 */
+    if (bgm_on) {
+        bgm_frames++;
+        if (bgm_frames >= BGM_TOTAL_FRAMES) {
+            REG_DMA1CNT = 0;
+            REG_SNDDSCNT |= SDS_ARESET;
+            REG_DMA1SAD = (u32)snd_bgm_data;
+            REG_DMA1DAD = (u32)&REG_FIFO_A;
+            REG_DMA1CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
+                        | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
+            bgm_frames = 0;
         }
+    }
 
-        /* 베이스 (채널2) */
-        play_note_ch2(bgm_bass[bgm_idx % BGM_BASS_LEN]);
-
-        bgm_idx++;
-        if (bgm_idx >= BGM_MELODY_LEN)
-            bgm_idx = 0;
+    /* SFX 타이머: 끝나면 DMA 정지 */
+    if (sfx_frames_left > 0) {
+        sfx_frames_left--;
+        if (sfx_frames_left == 0)
+            REG_DMA2CNT = 0;
     }
 }
 
 void sound_stop(void) {
     bgm_on = 0;
-    REG_SND1CNT = 0;
-    REG_SND2CNT = 0;
-    REG_SND4CNT = 0;
+    sfx_frames_left = 0;
+    REG_DMA1CNT = 0;
+    REG_DMA2CNT = 0;
 }
 
 #else

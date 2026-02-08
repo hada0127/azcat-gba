@@ -76,11 +76,20 @@ int main(void) {
         /* ── 플레이 ── */
         case STATE_PLAY: {
             u8 prev_life = gs.player.life;
+            u8 prev_bomb_timer = gs.bomb.timer;
+            u8 item_was_active = gs.item.active;
+
             game_play_update(&gs, kd, kp);
 
             /* 피격 효과음 */
             if (gs.player.life < prev_life && gs.state == STATE_PLAY)
                 sound_play_sfx(SFX_HIT);
+            /* 폭탄 사용 효과음 */
+            if (gs.bomb.timer > 0 && prev_bomb_timer == 0)
+                sound_play_sfx(SFX_BOMB);
+            /* 아이템 획득 효과음 */
+            if (item_was_active && !gs.item.active)
+                sound_play_sfx(SFX_ITEM);
 
             /* 배경 전환 감지 */
             if (gs.bg_type != prev_bg && !bomb_is_active(&gs.bomb)) {
