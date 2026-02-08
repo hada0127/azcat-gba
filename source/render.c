@@ -168,6 +168,15 @@ void render_sprites(const GameState* gs) {
                 ATTR1_SIZE_32,
                 ATTR2_PALBANK(pb) | ATTR2_ID(tid));
             obj_set_pos(&obj_buffer[oam], cx, cy);
+        } else if (gs->cats[i].state == CAT_STATE_HIT) {
+            /* 충돌 이펙트: 폭발 스프라이트 */
+            int cx = FP_TO_INT(gs->cats[i].x) - CAT_RENDER_OX;
+            int cy = FP_TO_INT(gs->cats[i].y);
+            obj_set_attr(&obj_buffer[oam],
+                ATTR0_SQUARE | ATTR0_4BPP,
+                ATTR1_SIZE_32,
+                ATTR2_PALBANK(PB_EXPLOSION) | ATTR2_ID(TID_EXPLOSION));
+            obj_set_pos(&obj_buffer[oam], cx, cy);
         } else {
             obj_hide(&obj_buffer[oam]);
         }

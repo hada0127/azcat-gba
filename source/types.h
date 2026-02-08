@@ -42,6 +42,7 @@
 #define CAT_GRAVITY         FP_FROM_FLOAT_CONST(0.1f)    /* 0.5/5 */
 #define CAT_BASE_FALL       FP_FROM_FLOAT_CONST(0.2f)    /* FP(1)/5 */
 #define CAT_SIT_FRAMES      15  /* 착지 체류 프레임 (0.25초@60fps) */
+#define CAT_HIT_FRAMES      15  /* 충돌 이펙트 지속 프레임 */
 
 /* ── 아이템 ── */
 #define ITEM_SPAWN_X_MIN    1

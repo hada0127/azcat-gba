@@ -29,10 +29,11 @@ u8 cats_update(Cat cats[], u16 score, s32 player_x,
 
     *score_add = 0;
 
-    /* 폭탄 활성 → 전체 제거 */
+    /* 폭탄 활성 → 전체 제거 (낙하 + 히트 이펙트 포함) */
     if (bomb_active) {
         for (i = 0; i < MAX_CATS; i++) {
-            if (cats[i].state == CAT_STATE_FALLING) {
+            if (cats[i].state == CAT_STATE_FALLING ||
+                cats[i].state == CAT_STATE_HIT) {
                 cats[i].state = CAT_STATE_INACTIVE;
                 cats[i].y = FP(200);
             }
@@ -51,11 +52,11 @@ u8 cats_update(Cat cats[], u16 score, s32 player_x,
             cats[i].y += CAT_BASE_FALL + cats[i].v_accel + FP(cat_accel) / FRAME_RATE_RATIO;
             cats[i].v_accel += CAT_GRAVITY;
 
-            /* 충돌 체크 */
+            /* 충돌 체크 → HIT 상태로 전환 (이펙트 표시) */
             if (collision_check_cat_player(cats[i].x, cats[i].y, player_x)) {
                 damage++;
-                cats[i].state = CAT_STATE_INACTIVE;
-                cats[i].y = FP(200);
+                cats[i].state = CAT_STATE_HIT;
+                cats[i].v_accel = 0;  /* 히트 타이머 */
                 continue;
             }
 
@@ -78,6 +79,13 @@ u8 cats_update(Cat cats[], u16 score, s32 player_x,
             cats[i].y += CAT_BASE_FALL + cats[i].v_accel;
             cats[i].v_accel += CAT_GRAVITY;
             if (cats[i].y > FP(200)) {
+                cats[i].state = CAT_STATE_INACTIVE;
+                cats[i].y = FP(200);
+            }
+        } else if (cats[i].state == CAT_STATE_HIT) {
+            /* 충돌 이펙트 표시 후 제거 */
+            cats[i].v_accel++;
+            if (cats[i].v_accel >= CAT_HIT_FRAMES) {
                 cats[i].state = CAT_STATE_INACTIVE;
                 cats[i].y = FP(200);
             }

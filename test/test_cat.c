@@ -68,6 +68,22 @@ void test_cats_collision_damage(void) {
     /* 플레이어를 같은 X에 */
     u8 damage = cats_update(cats, 10, FP(100), false, &score_add);
     TEST_ASSERT_TRUE(damage > 0);
+    /* 충돌 후 HIT 상태 (이펙트 표시) */
+    TEST_ASSERT_EQUAL_INT(CAT_STATE_HIT, cats[0].state);
+}
+
+void test_cats_hit_to_inactive(void) {
+    int i;
+    cats_init(cats);
+    /* HIT 상태, 타이머 거의 완료 */
+    cats[0].state = CAT_STATE_HIT;
+    cats[0].x = FP(100);
+    cats[0].y = FP(120);
+    cats[0].v_accel = CAT_HIT_FRAMES - 1;
+    s16 score_add = 0;
+    cats_update(cats, 10, FP(-100), false, &score_add);
+    /* HIT → INACTIVE 전환 */
+    TEST_ASSERT_EQUAL_INT(CAT_STATE_INACTIVE, cats[0].state);
 }
 
 void test_cats_no_collision_far_away(void) {
@@ -174,6 +190,7 @@ int run_cat_tests(void) {
     RUN_TEST(test_cats_fall);
     RUN_TEST(test_cats_land_gives_score);
     RUN_TEST(test_cats_collision_damage);
+    RUN_TEST(test_cats_hit_to_inactive);
     RUN_TEST(test_cats_no_collision_far_away);
     RUN_TEST(test_cats_bomb_clears_all);
     RUN_TEST(test_cats_qty_increases_with_score);
