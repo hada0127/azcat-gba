@@ -401,23 +401,17 @@ void render_gameover_score(s16 score) {
     }
 }
 
-/* ── 게임오버 화면: BG2 dim 오버레이 + 스프라이트는 뒤로 ── */
+/* ── 게임오버 화면: UI OAM 숨기고 게임플레이 스프라이트 유지 ── */
 void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
     int i;
 
-    /* UI/이펙트 OAM 숨김 (프레임버퍼로 대체) */
+    /* UI/이펙트 OAM 숨김 (프레임버퍼 UI로 대체) */
     obj_hide(&obj_buffer[OAM_FACE]);
     for (i = 0; i < 5; i++)
         obj_hide(&obj_buffer[OAM_SCORE_START + i]);
     obj_hide(&obj_buffer[OAM_BOMB_ICON]);
     for (i = 0; i < OAM_HIT_COUNT; i++)
         obj_hide(&obj_buffer[OAM_HIT_START + i]);
-
-    /* 스프라이트 우선순위 1 (BG2 뒤로 → 반투명 dim 오버레이 아래) */
-    obj_buffer[OAM_PLAYER].attr2 = (obj_buffer[OAM_PLAYER].attr2 & ~ATTR2_PRIO_MASK) | ATTR2_PRIO(1);
-    obj_buffer[OAM_ITEM].attr2 = (obj_buffer[OAM_ITEM].attr2 & ~ATTR2_PRIO_MASK) | ATTR2_PRIO(1);
-    for (i = 0; i < MAX_CATS; i++)
-        obj_buffer[OAM_CAT_START + i].attr2 = (obj_buffer[OAM_CAT_START + i].attr2 & ~ATTR2_PRIO_MASK) | ATTR2_PRIO(1);
 }
 
 /* ── 모든 스프라이트 숨기기 ── */

@@ -118,10 +118,12 @@ int main(void) {
                 prev_state = STATE_GAMEOVER;
                 go_input_delay = 30; /* 0.5초 입력 무시 */
                 sound_play_sfx(SFX_GAMEOVER);
-                render_darken_bg_palette();
-                /* 알파 블렌딩: BG2(dim 오버레이)를 1st, OBJ(스프라이트)를 2nd */
-                REG_BLDCNT = BLD_BUILD(BLD_BG2, BLD_OBJ, BLD_STD);
-                REG_BLDALPHA = BLDA_BUILD(10, 6);
+                /* WIN0: UI 영역에서 스프라이트 숨김 → UI가 위에 표시 */
+                REG_DISPCNT = DCNT_MODE4 | DCNT_BG2 | DCNT_OBJ | DCNT_OBJ_1D | DCNT_WIN0;
+                REG_WIN0H = (0 << 8) | 240;     /* X: 0~240 전체 */
+                REG_WIN0V = (42 << 8) | 118;     /* Y: 42~118 (UI 영역) */
+                REG_WININ = WIN_BG2;             /* WIN0 내부: BG2만 (OBJ 숨김) */
+                REG_WINOUT = WIN_BG2 | WIN_OBJ;  /* 외부: BG2 + OBJ 정상 */
                 render_gameover_grade(go_result.grade_index);
                 render_gameover_score(gs.score);
                 render_gameover_nav();
@@ -144,12 +146,12 @@ int main(void) {
             {
                 u8 next = gameover_update(kp);
                 if (next == STATE_TITLE) {
-                    REG_BLDCNT = 0;  /* 블렌딩 해제 */
+                    REG_DISPCNT = DCNT_MODE4 | DCNT_BG2 | DCNT_OBJ | DCNT_OBJ_1D;
                     sound_stop();
                     gs.state = STATE_TITLE;
                     prev_state = 0xFF; /* 타이틀 재진입 트리거 */
                 } else if (next == STATE_PLAY) {
-                    REG_BLDCNT = 0;  /* 블렌딩 해제 */
+                    REG_DISPCNT = DCNT_MODE4 | DCNT_BG2 | DCNT_OBJ | DCNT_OBJ_1D;
                     game_play_init(&gs);
                     prev_bg = 0xFF;
                     prev_state = STATE_PLAY;
