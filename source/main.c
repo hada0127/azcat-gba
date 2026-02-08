@@ -33,6 +33,7 @@ int main(void) {
     GameOverResult go_result;
     u8 prev_bg = 0xFF;
     u8 prev_state = 0xFF;
+    u8 go_input_delay = 0;  /* 게임오버 입력 딜레이 */
 
     /* 타이틀 배경 세팅 */
     render_set_title_bg();
@@ -86,6 +87,7 @@ int main(void) {
                     save_write(&save);
                 }
                 prev_state = STATE_GAMEOVER;
+                go_input_delay = 30; /* 0.5초 입력 무시 */
                 render_darken_bg_palette();
                 render_gameover_grade(go_result.grade_index);
                 render_gameover_nav();
@@ -101,6 +103,10 @@ int main(void) {
         case STATE_GAMEOVER:
             render_gameover_screen(&gs, &go_result);
 
+            if (go_input_delay > 0) {
+                go_input_delay--;
+                break;
+            }
             {
                 u8 next = gameover_update(kp);
                 if (next == STATE_TITLE) {
