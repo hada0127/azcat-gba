@@ -146,6 +146,11 @@ void render_sprites(const GameState* gs) {
         obj_set_pos(&obj_buffer[OAM_PLAYER], px, PLAYER_RENDER_Y);
     }
 
+    /* 충돌 이펙트 슬롯 초기화 */
+    int hit_slot = 0;
+    for (i = 0; i < OAM_HIT_COUNT; i++)
+        obj_hide(&obj_buffer[OAM_HIT_START + i]);
+
     /* 고양이 (32x32 SQUARE, 원본 17x32 → x 오프셋 보정) */
     for (i = 0; i < MAX_CATS; i++) {
         int oam = OAM_CAT_START + i;
@@ -169,14 +174,18 @@ void render_sprites(const GameState* gs) {
                 ATTR2_PALBANK(pb) | ATTR2_ID(tid));
             obj_set_pos(&obj_buffer[oam], cx, cy);
         } else if (gs->cats[i].state == CAT_STATE_HIT) {
-            /* 충돌 이펙트: 폭발 스프라이트 */
-            int cx = FP_TO_INT(gs->cats[i].x) - CAT_RENDER_OX;
-            int cy = FP_TO_INT(gs->cats[i].y);
-            obj_set_attr(&obj_buffer[oam],
-                ATTR0_SQUARE | ATTR0_4BPP,
-                ATTR1_SIZE_32,
-                ATTR2_PALBANK(PB_EXPLOSION) | ATTR2_ID(TID_EXPLOSION));
-            obj_set_pos(&obj_buffer[oam], cx, cy);
+            /* 고양이 슬롯 숨김, 전용 히트 슬롯에 폭발 표시 */
+            obj_hide(&obj_buffer[oam]);
+            if (hit_slot < OAM_HIT_COUNT) {
+                int cx = FP_TO_INT(gs->cats[i].x) - CAT_RENDER_OX;
+                int cy = FP_TO_INT(gs->cats[i].y);
+                obj_set_attr(&obj_buffer[OAM_HIT_START + hit_slot],
+                    ATTR0_SQUARE | ATTR0_4BPP,
+                    ATTR1_SIZE_32,
+                    ATTR2_PALBANK(PB_EXPLOSION) | ATTR2_ID(TID_EXPLOSION));
+                obj_set_pos(&obj_buffer[OAM_HIT_START + hit_slot], cx, cy);
+                hit_slot++;
+            }
         } else {
             obj_hide(&obj_buffer[oam]);
         }
@@ -202,8 +211,6 @@ void render_sprites(const GameState* gs) {
         obj_hide(&obj_buffer[OAM_ITEM]);
     }
 
-    /* 폭탄 이펙트는 BG로 처리 (main.c에서 render_set_bomb_bg 호출) */
-    obj_hide(&obj_buffer[OAM_EXPLOSION]);
 }
 
 /* ── 숫자 5자리를 OAM으로 표시 ── */
