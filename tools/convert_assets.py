@@ -278,7 +278,7 @@ def create_nav_text():
 
     NAV_W = 80
     NAV_H = 15
-    texts = ['\u25c0타이틀', '재도전\u25b6']
+    texts = ['B 타이틀', '재도전 A']
     names = ['nav_title', 'nav_retry']
 
     # Windows 맑은고딕

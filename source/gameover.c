@@ -8,7 +8,7 @@ void gameover_init(GameOverResult* result, s16 score, s16 hiscore) {
 }
 
 u8 gameover_update(u16 keys_pressed) {
-    if (keys_pressed & KEY_LEFT)  return STATE_TITLE;
-    if (keys_pressed & KEY_RIGHT) return STATE_PLAY;
+    if (keys_pressed & KEY_B) return STATE_TITLE;
+    if (keys_pressed & KEY_A) return STATE_PLAY;
     return 0;
 }

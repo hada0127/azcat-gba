@@ -21,11 +21,11 @@ void test_gameover_no_hiscore(void) {
 }
 
 void test_gameover_left_to_title(void) {
-    TEST_ASSERT_EQUAL_INT(STATE_TITLE, gameover_update(KEY_LEFT));
+    TEST_ASSERT_EQUAL_INT(STATE_TITLE, gameover_update(KEY_B));
 }
 
 void test_gameover_right_to_retry(void) {
-    TEST_ASSERT_EQUAL_INT(STATE_PLAY, gameover_update(KEY_RIGHT));
+    TEST_ASSERT_EQUAL_INT(STATE_PLAY, gameover_update(KEY_A));
 }
 
 void test_gameover_no_input(void) {
