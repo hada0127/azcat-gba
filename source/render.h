@@ -29,11 +29,11 @@
 #define TID_ITEM_HP     612  /*  4타일 16x16 */
 #define TID_ITEM_BOMB   616  /*  4타일 16x16 */
 #define TID_EXPLOSION   620  /* 16타일 32x32 */
-#define TID_FACE_HAPPY  636  /*  4타일 16x16 */
-#define TID_FACE_NORMAL 640
-#define TID_FACE_HURT   644
-#define TID_FACE_DEAD   648
-#define TID_FONT        652  /* 0~9 숫자 (10타일) */
+#define TID_FACE_HAPPY  636  /* 16타일 32x32 */
+#define TID_FACE_NORMAL 652  /* 16타일 32x32 */
+#define TID_FACE_HURT   668  /* 16타일 32x32 */
+#define TID_FACE_DEAD   684  /* 16타일 32x32 */
+#define TID_FONT        700  /* 0~9 숫자 (10타일) */
 
 /* ── OBJ 팔레트 뱅크 ── */
 #define PB_PLAYER       0
@@ -55,8 +55,13 @@
 /* 플레이어 렌더 Y (화면 하단) */
 #define PLAYER_RENDER_Y (SCREEN_H - 32)
 
-/* UI 패널 좌표 (오른쪽 60px 영역) */
-#define UI_PANEL_X      (PLAY_AREA_W + 2)  /* 182 */
+/* HUD 좌표 (상단 좌측 오버레이) */
+#define HUD_FACE_X      0
+#define HUD_FACE_Y      0
+#define HUD_SCORE_X     34  /* 얼굴 옆 */
+#define HUD_SCORE_Y     12
+#define HUD_BOMB_X      16  /* 얼굴 위에 겹침 */
+#define HUD_BOMB_Y      16
 
 void render_init(void);
 void render_set_bg(u8 bg_type);

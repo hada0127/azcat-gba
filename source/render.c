@@ -47,11 +47,11 @@ void render_init(void) {
     memcpy32(&tile_mem[5][100], spr_item_hpTiles,      spr_item_hpTilesLen / 4);     /* 612: 4타일 */
     memcpy32(&tile_mem[5][104], spr_item_bombTiles,    spr_item_bombTilesLen / 4);    /* 616: 4타일 */
     memcpy32(&tile_mem[5][108], spr_explosionTiles,    spr_explosionTilesLen / 4);    /* 620: 16타일 */
-    memcpy32(&tile_mem[5][124], spr_face_happyTiles,   spr_face_happyTilesLen / 4);  /* 636: 4타일 */
-    memcpy32(&tile_mem[5][128], spr_face_normalTiles,  spr_face_normalTilesLen / 4);  /* 640 */
-    memcpy32(&tile_mem[5][132], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);    /* 644 */
-    memcpy32(&tile_mem[5][136], spr_face_deadTiles,    spr_face_deadTilesLen / 4);    /* 648 */
-    memcpy32(&tile_mem[5][140], font_numbersTiles,     font_numbersTilesLen / 4);     /* 652 */
+    memcpy32(&tile_mem[5][124], spr_face_happyTiles,   spr_face_happyTilesLen / 4);  /* 636: 16타일 */
+    memcpy32(&tile_mem[5][140], spr_face_normalTiles,  spr_face_normalTilesLen / 4);  /* 652: 16타일 */
+    memcpy32(&tile_mem[5][156], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);    /* 668: 16타일 */
+    memcpy32(&tile_mem[5][172], spr_face_deadTiles,    spr_face_deadTilesLen / 4);    /* 684: 16타일 */
+    memcpy32(&tile_mem[5][188], font_numbersTiles,     font_numbersTilesLen / 4);     /* 700 */
 
     /* OBJ 팔레트 로드 (walk0 팔레트 = 공유 팔레트) */
     memcpy16(pal_obj_bank[PB_PLAYER],      spr_player_walk0Pal, spr_player_walk0PalLen / 2);
@@ -184,7 +184,7 @@ void render_sprites(const GameState* gs) {
             ATTR0_SQUARE | ATTR0_4BPP,
             ATTR1_SIZE_32,
             ATTR2_PALBANK(PB_EXPLOSION) | ATTR2_ID(TID_EXPLOSION));
-        obj_set_pos(&obj_buffer[OAM_EXPLOSION], (PLAY_AREA_W - 32) / 2, 64);
+        obj_set_pos(&obj_buffer[OAM_EXPLOSION], (SCREEN_W - 32) / 2, 64);
     } else {
         obj_hide(&obj_buffer[OAM_EXPLOSION]);
     }
@@ -205,10 +205,9 @@ static void render_digits(s16 value, int oam_start, int x, int y) {
     }
 }
 
-/* ── HUD 렌더링 (플레이 중) ── */
-void render_hud(const GameState* gs) {
-    /* 얼굴 아이콘 */
-    u8 face = hud_get_face_index(gs->player.life);
+/* ── HUD용 얼굴 설정 ── */
+static void render_face(u8 life) {
+    u8 face = hud_get_face_index(life);
     u16 face_tid, face_pb;
     switch (face) {
     case FACE_HAPPY:  face_tid = TID_FACE_HAPPY;  face_pb = PB_FACE_HAPPY;  break;
@@ -218,20 +217,26 @@ void render_hud(const GameState* gs) {
     }
     obj_set_attr(&obj_buffer[OAM_FACE],
         ATTR0_SQUARE | ATTR0_4BPP,
-        ATTR1_SIZE_16,
+        ATTR1_SIZE_32,
         ATTR2_PALBANK(face_pb) | ATTR2_ID(face_tid));
-    obj_set_pos(&obj_buffer[OAM_FACE], UI_PANEL_X + 2, 8);
+    obj_set_pos(&obj_buffer[OAM_FACE], HUD_FACE_X, HUD_FACE_Y);
+}
 
-    /* 점수 (얼굴 아래) */
-    render_digits(gs->score, OAM_SCORE_START, UI_PANEL_X, 28);
+/* ── HUD 렌더링 (플레이 중) ── */
+void render_hud(const GameState* gs) {
+    /* 얼굴 아이콘 (32x32, 상단 좌측) */
+    render_face(gs->player.life);
 
-    /* 폭탄 보유 아이콘 */
+    /* 점수 (얼굴 옆) */
+    render_digits(gs->score, OAM_SCORE_START, HUD_SCORE_X, HUD_SCORE_Y);
+
+    /* 폭탄 보유: 얼굴 위에 겹침 */
     if (gs->bomb.have) {
         obj_set_attr(&obj_buffer[OAM_BOMB_ICON],
             ATTR0_SQUARE | ATTR0_4BPP,
             ATTR1_SIZE_16,
             ATTR2_PALBANK(PB_ITEM_BOMB) | ATTR2_ID(TID_ITEM_BOMB));
-        obj_set_pos(&obj_buffer[OAM_BOMB_ICON], UI_PANEL_X + 4, 48);
+        obj_set_pos(&obj_buffer[OAM_BOMB_ICON], HUD_BOMB_X, HUD_BOMB_Y);
     } else {
         obj_hide(&obj_buffer[OAM_BOMB_ICON]);
     }
@@ -239,8 +244,8 @@ void render_hud(const GameState* gs) {
 
 /* ── 타이틀 HUD (하이스코어 표시) ── */
 void render_title_hud(s16 hiscore) {
-    /* 하이스코어 숫자를 게임 영역 중앙 하단에 표시 */
-    render_digits(hiscore, OAM_SCORE_START, (PLAY_AREA_W - 40) / 2, SCREEN_H - 16);
+    /* 하이스코어 숫자를 화면 중앙 하단에 표시 */
+    render_digits(hiscore, OAM_SCORE_START, (SCREEN_W - 40) / 2, SCREEN_H - 16);
 
     /* 나머지 HUD 슬롯 숨기기 */
     obj_hide(&obj_buffer[OAM_FACE]);
@@ -257,8 +262,8 @@ void render_gameover_grade(u8 grade_index) {
     pal_bg_mem[GRADE_PAL_IDX] = RGB15(31, 31, 31);
 
     const unsigned char* src = grade_image_data[grade_index];
-    /* 게임 영역 중앙 배치 */
-    int ox = (PLAY_AREA_W - GRADE_IMG_W) / 2;
+    /* 화면 중앙 배치 */
+    int ox = (SCREEN_W - GRADE_IMG_W) / 2;
     int oy = SCREEN_H / 2 + 10;
 
     u16* page0 = (u16*)0x06000000;
@@ -292,15 +297,11 @@ void render_gameover_grade(u8 grade_index) {
 /* ── 게임오버 화면 ── */
 void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
     /* 게임 스프라이트 유지 (프리즈 상태) */
-    /* 얼굴: 사망 → 우측 패널 */
-    obj_set_attr(&obj_buffer[OAM_FACE],
-        ATTR0_SQUARE | ATTR0_4BPP,
-        ATTR1_SIZE_16,
-        ATTR2_PALBANK(PB_FACE_DEAD) | ATTR2_ID(TID_FACE_DEAD));
-    obj_set_pos(&obj_buffer[OAM_FACE], UI_PANEL_X + 2, 8);
+    /* 얼굴: 사망 → 상단 좌측 */
+    render_face(0);  /* life=0 → 사망 얼굴 */
 
-    /* 최종 점수 → 우측 패널 */
-    render_digits(gs->score, OAM_SCORE_START, UI_PANEL_X, 28);
+    /* 최종 점수 → 얼굴 옆 */
+    render_digits(gs->score, OAM_SCORE_START, HUD_SCORE_X, HUD_SCORE_Y);
 
     /* 폭탄 아이콘 숨김 */
     obj_hide(&obj_buffer[OAM_BOMB_ICON]);

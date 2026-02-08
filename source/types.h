@@ -13,7 +13,7 @@
 /* ── 화면 / 레이아웃 ── */
 #define SCREEN_W            240
 #define SCREEN_H            160
-#define PLAY_AREA_W         180  /* 게임 영역 너비 (오른쪽 60px = UI 패널) */
+#define PLAY_AREA_W         SCREEN_W  /* 전체 화면 사용 */
 #define HUD_HEIGHT               16
 #define GAME_AREA_H         (SCREEN_H - HUD_HEIGHT)
 
@@ -21,9 +21,9 @@
 #define FRAME_RATE_RATIO    5
 
 /* ── 플레이어 ── */
-#define PLAYER_INIT_X       FP(74)   /* (PLAY_AREA_W - 32) / 2 */
+#define PLAYER_INIT_X       FP(104)  /* (SCREEN_W - 32) / 2 */
 #define PLAYER_X_MIN        FP(0)
-#define PLAYER_X_MAX        FP(148)  /* PLAY_AREA_W - 32 */
+#define PLAYER_X_MAX        FP(208)  /* SCREEN_W - 32 */
 #define PLAYER_BASE_SPEED   FP_FROM_FLOAT_CONST(1.0f)    /* FP(5)/5 */
 #define PLAYER_ACCEL_INC    FP_FROM_FLOAT_CONST(0.04f)   /* 0.2/5 */
 #define PLAYER_ACCEL_MAX    4
@@ -33,7 +33,7 @@
 /* ── 고양이 ── */
 #define MAX_CATS            33
 #define CAT_SPAWN_X_MIN     1
-#define CAT_SPAWN_X_MAX     164  /* PLAY_AREA_W - 16 */
+#define CAT_SPAWN_X_MAX     224  /* SCREEN_W - 16 */
 #define CAT_SPAWN_Y_MIN     (-120)
 #define CAT_SPAWN_Y_MAX     (-20)
 #define CAT_LAND_Y          FP(128)
@@ -45,7 +45,7 @@
 
 /* ── 아이템 ── */
 #define ITEM_SPAWN_X_MIN    1
-#define ITEM_SPAWN_X_MAX    164  /* PLAY_AREA_W - 16 */
+#define ITEM_SPAWN_X_MAX    224  /* SCREEN_W - 16 */
 #define ITEM_SPAWN_Y        FP(-24)
 #define ITEM_LAND_Y         FP(140)
 #define ITEM_GRAVITY        FP_FROM_FLOAT_CONST(0.1f)    /* 0.5/5 */

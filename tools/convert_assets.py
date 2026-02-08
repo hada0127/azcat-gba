@@ -273,11 +273,11 @@ def main():
     convert_sprite('43.png', 'spr_item_bomb.png', (16, 16))
     # 폭발 32x32
     convert_sprite('52.png', 'spr_explosion.png', (32, 32))
-    # 캐릭터 얼굴 16x16 (32x32 → 16x16 축소, HUD용)
-    convert_sprite('28.png', 'spr_face_happy.png', (16, 16))
-    convert_sprite('30.png', 'spr_face_normal.png', (16, 16))
-    convert_sprite('32.png', 'spr_face_hurt.png', (16, 16))
-    convert_sprite('34.png', 'spr_face_dead.png', (16, 16))
+    # 캐릭터 얼굴 32x32 (HUD용)
+    convert_sprite('28.png', 'spr_face_happy.png', (32, 32))
+    convert_sprite('30.png', 'spr_face_normal.png', (32, 32))
+    convert_sprite('32.png', 'spr_face_hurt.png', (32, 32))
+    convert_sprite('34.png', 'spr_face_dead.png', (32, 32))
 
     # 폰트
     print("\n[폰트]")
