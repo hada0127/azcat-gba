@@ -1,6 +1,6 @@
 # azcat-gba
 
-**Ah! Dodge the Cats: Grand Master** (아! 고양이를 피해라 대왕) — a Game Boy Advance port of a 2003 GP32 game.
+**Ah! Cat's manga daioh!** (아! 고양이를 피해라 대왕) — a Game Boy Advance port of a 2003 GP32 game.
 
 ## About
 
@@ -89,8 +89,8 @@ Use any GBA emulator (e.g., [mGBA](https://mgba.io/)) or flash to a GBA cartridg
 
 ## Credits
 
-- **Original Game** (2003, GP32): taRu
-- **GBA Port** (2026): taRu, with assistance from Claude (Anthropic)
+- **Original Game** (2003, GP32): hada0127(taRu)
+- **GBA Port** (2026): hada0127(taRu)
 
 ## License
 
