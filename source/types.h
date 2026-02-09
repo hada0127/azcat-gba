@@ -23,7 +23,7 @@
 /* ── 플레이어 ── */
 #define PLAYER_INIT_X       FP(104)  /* (SCREEN_W - 32) / 2 */
 #define PLAYER_X_MIN        FP(0)
-#define PLAYER_X_MAX        FP(208)  /* SCREEN_W - 32 */
+#define PLAYER_X_MAX        FP(214)  /* SCREEN_W - 26 (affine 2/3 시각 폭) */
 #define PLAYER_BASE_SPEED   FP_FROM_FLOAT_CONST(1.0f)    /* FP(5)/5 */
 #define PLAYER_ACCEL_INC    FP_FROM_FLOAT_CONST(0.04f)   /* 0.2/5 */
 #define PLAYER_ACCEL_MAX    4
@@ -33,12 +33,12 @@
 /* ── 고양이 ── */
 #define MAX_CATS            33
 #define CAT_SPAWN_X_MIN     1
-#define CAT_SPAWN_X_MAX     208  /* SCREEN_W - 32 (32x32 OAM) */
+#define CAT_SPAWN_X_MAX     214  /* SCREEN_W - 26 (affine 2/3) */
 #define CAT_SPAWN_Y_MIN     (-120)
 #define CAT_SPAWN_Y_MAX     (-20)
-#define CAT_LAND_Y          FP(128)
+#define CAT_LAND_Y          FP(131)  /* 바닥=157, OAM bottom=131+26=157 */
 #define CAT_HIT_Y_MIN       FP(96)
-#define CAT_HIT_Y_MAX       FP(128)
+#define CAT_HIT_Y_MAX       FP(131)  /* = CAT_LAND_Y */
 #define CAT_GRAVITY         FP_FROM_FLOAT_CONST(0.1f)    /* 0.5/5 */
 #define CAT_BASE_FALL       FP_FROM_FLOAT_CONST(0.2f)    /* FP(1)/5 */
 #define CAT_SIT_FRAMES      15  /* 착지 체류 프레임 (0.25초@60fps) */
@@ -46,9 +46,9 @@
 
 /* ── 아이템 ── */
 #define ITEM_SPAWN_X_MIN    1
-#define ITEM_SPAWN_X_MAX    208  /* SCREEN_W - 32 (32x32 OAM) */
+#define ITEM_SPAWN_X_MAX    214  /* SCREEN_W - 26 (affine 2/3) */
 #define ITEM_SPAWN_Y        FP(-24)
-#define ITEM_LAND_Y         FP(140)
+#define ITEM_LAND_Y         FP(131)  /* 바닥=157, OAM bottom=131+26=157 */
 #define ITEM_GRAVITY        FP_FROM_FLOAT_CONST(0.1f)    /* 0.5/5 */
 #define ITEM_BASE_FALL      FP_FROM_FLOAT_CONST(0.2f)    /* FP(1)/5 */
 #define ITEM_SIT_TIMEOUT    (45 * FRAME_RATE_RATIO)

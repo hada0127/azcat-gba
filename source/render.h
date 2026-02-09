@@ -63,13 +63,17 @@
 #define GO_SCORE_Y      68
 #define GO_NAV_Y        100
 
-/* 플레이어 렌더 Y (화면 하단, 32x64 OAM) */
-#define PLAYER_RENDER_Y (SCREEN_H - 64)
+/* 플레이어 렌더 Y (affine 2/3 스케일링 보정) */
+#define PLAYER_RENDER_Y 104
 
 /* 렌더 오프셋 (원본→OAM 패딩 보정) */
 #define CAT_RENDER_OX   7   /* (32-17)/2 = 7.5 → 7 */
 #define ITEM_RENDER_OX  6   /* (32-20)/2 = 6 */
-#define ITEM_RENDER_OY  10  /* 32-22 = 10 (하단정렬 top padding) */
+#define ITEM_RENDER_OY  0   /* affine 센터링이 대체 */
+
+/* OBJ Affine 스케일링 (게임 스프라이트 2/3 표시) */
+#define AFFINE_SCALE    384  /* 3/2 in .8 fixed = 2/3 display size */
+#define AFFINE_IDX      0    /* 게임 스프라이트 공용 affine 매트릭스 인덱스 */
 
 /* HUD 좌표 */
 #define HUD_FACE_X      207  /* 240-32-1 = 오른쪽 1px 여백 */

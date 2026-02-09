@@ -38,6 +38,15 @@ static OBJ_ATTR obj_buffer[128];
 void render_init(void) {
     oam_init(obj_buffer, 128);
 
+    /* OBJ Affine 매트릭스 0번: 2/3 스케일링 */
+    {
+        OBJ_AFFINE *oa = (OBJ_AFFINE*)obj_buffer;
+        oa[AFFINE_IDX].pa = AFFINE_SCALE;
+        oa[AFFINE_IDX].pb = 0;
+        oa[AFFINE_IDX].pc = 0;
+        oa[AFFINE_IDX].pd = AFFINE_SCALE;
+    }
+
     /* Mode 4에서 OBJ 타일은 tile_mem[5] (ID 512~)부터 안전 */
 
     /* 타일 로드 (TID 오프셋 = tile_mem[5][TID-512]) */
@@ -128,21 +137,21 @@ void render_sprites(const GameState* gs) {
             tid = walk_tids[frame];
         }
 
-        /* 32x64 TALL OAM (원본 ~30x53) */
+        /* 32x64 TALL OAM + affine 2/3 스케일링 */
         obj_set_attr(&obj_buffer[OAM_PLAYER],
-            ATTR0_TALL | ATTR0_4BPP,
-            ATTR1_SIZE_64 | flip,
+            ATTR0_TALL | ATTR0_4BPP | ATTR0_AFF,
+            ATTR1_SIZE_64 | ATTR1_AFF_ID(AFFINE_IDX) | flip,
             ATTR2_PALBANK(PB_PLAYER) | ATTR2_ID(tid));
         obj_set_pos(&obj_buffer[OAM_PLAYER], px, PLAYER_RENDER_Y);
     } else {
-        /* 사망: 64x32 WIDE 스프라이트 (원본 54x25) */
+        /* 사망: 64x32 WIDE + affine 2/3 스케일링 */
         int px = FP_TO_INT(gs->player.x) - 16;  /* 중앙 보정 */
         u16 flip = (gs->player.direction == DIR_RIGHT) ? ATTR1_HFLIP : 0;
         obj_set_attr(&obj_buffer[OAM_PLAYER],
-            ATTR0_WIDE | ATTR0_4BPP,
-            ATTR1_SIZE_64 | flip,
+            ATTR0_WIDE | ATTR0_4BPP | ATTR0_AFF,
+            ATTR1_SIZE_64 | ATTR1_AFF_ID(AFFINE_IDX) | flip,
             ATTR2_PALBANK(PB_PLAYER) | ATTR2_ID(TID_PLAYER_DEAD));
-        obj_set_pos(&obj_buffer[OAM_PLAYER], px, SCREEN_H - 32); /* 64x32 바닥 정렬 */
+        obj_set_pos(&obj_buffer[OAM_PLAYER], px, 131);
     }
 
     /* 충돌 이펙트 슬롯 초기화 */
@@ -157,8 +166,8 @@ void render_sprites(const GameState* gs) {
             int cx = FP_TO_INT(gs->cats[i].x) - CAT_RENDER_OX;
             int cy = FP_TO_INT(gs->cats[i].y);
             obj_set_attr(&obj_buffer[oam],
-                ATTR0_SQUARE | ATTR0_4BPP,
-                ATTR1_SIZE_32,
+                ATTR0_SQUARE | ATTR0_4BPP | ATTR0_AFF,
+                ATTR1_SIZE_32 | ATTR1_AFF_ID(AFFINE_IDX),
                 ATTR2_PALBANK(PB_CAT_SIT) | ATTR2_ID(TID_CAT_SIT));
             obj_set_pos(&obj_buffer[oam], cx, cy);
         } else if (gs->cats[i].state == CAT_STATE_FALLING ||
@@ -168,8 +177,8 @@ void render_sprites(const GameState* gs) {
             u16 tid = (i & 1) ? TID_CAT_BROWN : TID_CAT_WHITE;
             u16 pb  = (i & 1) ? PB_CAT_BROWN  : PB_CAT_WHITE;
             obj_set_attr(&obj_buffer[oam],
-                ATTR0_SQUARE | ATTR0_4BPP,
-                ATTR1_SIZE_32,
+                ATTR0_SQUARE | ATTR0_4BPP | ATTR0_AFF,
+                ATTR1_SIZE_32 | ATTR1_AFF_ID(AFFINE_IDX),
                 ATTR2_PALBANK(pb) | ATTR2_ID(tid));
             obj_set_pos(&obj_buffer[oam], cx, cy);
         } else if (gs->cats[i].state == CAT_STATE_HIT) {
@@ -179,8 +188,8 @@ void render_sprites(const GameState* gs) {
                 int cx = FP_TO_INT(gs->cats[i].x) - CAT_RENDER_OX;
                 int cy = FP_TO_INT(gs->cats[i].y);
                 obj_set_attr(&obj_buffer[OAM_HIT_START + hit_slot],
-                    ATTR0_SQUARE | ATTR0_4BPP,
-                    ATTR1_SIZE_32,
+                    ATTR0_SQUARE | ATTR0_4BPP | ATTR0_AFF,
+                    ATTR1_SIZE_32 | ATTR1_AFF_ID(AFFINE_IDX),
                     ATTR2_PALBANK(PB_EXPLOSION) | ATTR2_ID(TID_EXPLOSION));
                 obj_set_pos(&obj_buffer[OAM_HIT_START + hit_slot], cx, cy);
                 hit_slot++;
@@ -193,7 +202,7 @@ void render_sprites(const GameState* gs) {
     /* 아이템 (32x32 SQUARE, 원본 20x22 → x/y 오프셋 보정) */
     if (gs->item.active) {
         int ix = FP_TO_INT(gs->item.x) - ITEM_RENDER_OX;
-        int iy = FP_TO_INT(gs->item.y) - ITEM_RENDER_OY;
+        int iy = FP_TO_INT(gs->item.y);  /* affine 센터링이 OY 보정 대체 */
         u16 tid, pb;
         switch (gs->item.type) {
         case ITEM_TYPE_BOMB:   tid = TID_ITEM_BOMB;   pb = PB_ITEM_BOMB;   break;
@@ -202,8 +211,8 @@ void render_sprites(const GameState* gs) {
         default:               tid = TID_ITEM_HP;     pb = PB_ITEM_HP;     break;
         }
         obj_set_attr(&obj_buffer[OAM_ITEM],
-            ATTR0_SQUARE | ATTR0_4BPP,
-            ATTR1_SIZE_32,
+            ATTR0_SQUARE | ATTR0_4BPP | ATTR0_AFF,
+            ATTR1_SIZE_32 | ATTR1_AFF_ID(AFFINE_IDX),
             ATTR2_PALBANK(pb) | ATTR2_ID(tid));
         obj_set_pos(&obj_buffer[OAM_ITEM], ix, iy);
     } else {
