@@ -280,11 +280,11 @@ void render_hud(const GameState* gs) {
     /* 점수 (중앙 상단, 16x16 테두리 폰트) */
     render_digits(gs->score, OAM_SCORE_START, HUD_SCORE_X, HUD_SCORE_Y);
 
-    /* 폭탄 보유 아이콘 (얼굴 하단부 겹침) */
+    /* 폭탄 보유 아이콘 (16x16, 얼굴 하단부 겹침) */
     if (gs->bomb.have) {
         obj_set_attr(&obj_buffer[OAM_BOMB_ICON],
             ATTR0_SQUARE | ATTR0_4BPP,
-            ATTR1_SIZE_32,
+            ATTR1_SIZE_16,
             ATTR2_PALBANK(PB_BOMB_ICON) | ATTR2_ID(TID_BOMB_ICON));
         obj_set_pos(&obj_buffer[OAM_BOMB_ICON], HUD_BOMB_X, HUD_BOMB_Y);
     } else {
