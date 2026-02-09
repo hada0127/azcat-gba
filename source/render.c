@@ -28,6 +28,7 @@
 #include "spr_face_hurt.h"
 #include "spr_face_dead.h"
 #include "font_numbers.h"
+#include "spr_bomb_icon.h"
 #include "grade_images.h"
 #include "nav_text.h"
 
@@ -72,6 +73,7 @@ void render_init(void) {
     memcpy32(&tile_mem[5][320], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);    /* 832: 32타일 */
     memcpy32(&tile_mem[5][352], spr_face_deadTiles,    spr_face_deadTilesLen / 4);    /* 864: 32타일 */
     memcpy32(&tile_mem[5][384], font_numbersTiles,     font_numbersTilesLen / 4);     /* 896: 40타일 16x16 */
+    memcpy32(&tile_mem[5][424], spr_bomb_iconTiles,   spr_bomb_iconTilesLen / 4);    /* 936: 16타일 32x32 */
 
     /* OBJ 팔레트 로드 (walk0 팔레트 = 공유 팔레트) */
     memcpy16(pal_obj_bank[PB_PLAYER],      spr_player_walk0Pal, spr_player_walk0PalLen / 2);
@@ -88,6 +90,7 @@ void render_init(void) {
     memcpy16(pal_obj_bank[PB_FACE_HURT],   spr_face_hurtPal,   spr_face_hurtPalLen / 2);
     memcpy16(pal_obj_bank[PB_FACE_DEAD],   spr_face_deadPal,   spr_face_deadPalLen / 2);
     memcpy16(pal_obj_bank[PB_FONT],        font_numbersPal,    font_numbersPalLen / 2);
+    memcpy16(pal_obj_bank[PB_BOMB_ICON],   spr_bomb_iconPal,   spr_bomb_iconPalLen / 2);
 }
 
 /* ── 배경 전환 (양쪽 페이지에 복사) ── */
@@ -277,12 +280,12 @@ void render_hud(const GameState* gs) {
     /* 점수 (중앙 상단, 16x16 테두리 폰트) */
     render_digits(gs->score, OAM_SCORE_START, HUD_SCORE_X, HUD_SCORE_Y);
 
-    /* 폭탄 보유 아이콘 (얼굴 영역 겹침) */
+    /* 폭탄 보유 아이콘 (얼굴 하단부 겹침) */
     if (gs->bomb.have) {
         obj_set_attr(&obj_buffer[OAM_BOMB_ICON],
             ATTR0_SQUARE | ATTR0_4BPP,
             ATTR1_SIZE_32,
-            ATTR2_PALBANK(PB_ITEM_BOMB) | ATTR2_ID(TID_ITEM_BOMB));
+            ATTR2_PALBANK(PB_BOMB_ICON) | ATTR2_ID(TID_BOMB_ICON));
         obj_set_pos(&obj_buffer[OAM_BOMB_ICON], HUD_BOMB_X, HUD_BOMB_Y);
     } else {
         obj_hide(&obj_buffer[OAM_BOMB_ICON]);

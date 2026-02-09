@@ -37,7 +37,7 @@
 #define CAT_SPAWN_Y_MIN     (-120)
 #define CAT_SPAWN_Y_MAX     (-20)
 #define CAT_LAND_Y          FP(131)  /* 바닥=157, OAM bottom=131+26=157 */
-#define CAT_HIT_Y_MIN       FP(96)
+#define CAT_HIT_Y_MIN       FP(108)  /* 충돌 시작 Y를 아래로 */
 #define CAT_HIT_Y_MAX       FP(131)  /* = CAT_LAND_Y */
 #define CAT_GRAVITY         FP_FROM_FLOAT_CONST(0.06f)   /* 0.3/5 */
 #define CAT_BASE_FALL       FP_FROM_FLOAT_CONST(0.12f)   /* 0.6/5 */

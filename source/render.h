@@ -38,6 +38,7 @@
 #define TID_FACE_HURT   832  /* 32타일 32x64 */
 #define TID_FACE_DEAD   864  /* 32타일 32x64 */
 #define TID_FONT        896  /* 0~9 숫자 (4타일x10=40타일, 16x16) */
+#define TID_BOMB_ICON   936  /* 16타일 32x32 (원본 18x24) */
 
 /* ── OBJ 팔레트 뱅크 ── */
 #define PB_PLAYER       0
@@ -54,6 +55,7 @@
 #define PB_FACE_HURT    11
 #define PB_FACE_DEAD    12
 #define PB_FONT         13
+#define PB_BOMB_ICON    15
 
 /* 배경 타입 상수 (title 추가) */
 #define BG_TITLE_SCREEN 0xFF
@@ -80,7 +82,7 @@
 #define HUD_FACE_X      207  /* 240-32-1 = 오른쪽 1px 여백 */
 #define HUD_FACE_Y      1    /* 위쪽 1px 여백 */
 #define HUD_BOMB_X      207  /* 얼굴과 같은 X */
-#define HUD_BOMB_Y      33   /* 얼굴 하단 겹침 (1+32) */
+#define HUD_BOMB_Y      25   /* 얼굴 하단부 겹침 */
 #define HUD_SCORE_X     88  /* 중앙 (240-5*12-4)/2 */
 #define HUD_SCORE_Y     0   /* 상단 */
 #define HUD_DIGIT_SPACE 12  /* 16x16 숫자 간격 */

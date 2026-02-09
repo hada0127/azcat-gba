@@ -1,11 +1,11 @@
 #include "collision.h"
 
-/* 스프라이트 크기 상수 (affine 2/3 스케일링 적용) */
-#define PLAYER_W    FP(16)   /* 24 * 2/3 = 16 */
+/* 스프라이트 크기 상수 (affine 2/3 + 히트박스 축소) */
+#define PLAYER_W    FP(12)   /* 좌우 좁힘 */
 #define PLAYER_H    FP(16)
-#define CAT_W       FP(11)   /* 16 * 2/3 ≈ 11 */
-#define CAT_H       FP(21)   /* 32 * 2/3 ≈ 21 */
-#define ITEM_W      FP(11)
+#define CAT_W       FP(8)    /* 좌우 좁힘 */
+#define CAT_H       FP(21)
+#define ITEM_W      FP(8)
 #define ITEM_H      FP(11)
 
 bool collision_check_aabb(const HitBox* a, const HitBox* b) {
