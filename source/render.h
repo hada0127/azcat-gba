@@ -79,6 +79,8 @@
 /* HUD 좌표 */
 #define HUD_FACE_X      207  /* 240-32-1 = 오른쪽 1px 여백 */
 #define HUD_FACE_Y      1    /* 위쪽 1px 여백 */
+#define HUD_BOMB_X      207  /* 얼굴과 같은 X */
+#define HUD_BOMB_Y      33   /* 얼굴 하단 겹침 (1+32) */
 #define HUD_SCORE_X     88  /* 중앙 (240-5*12-4)/2 */
 #define HUD_SCORE_Y     0   /* 상단 */
 #define HUD_DIGIT_SPACE 12  /* 16x16 숫자 간격 */
