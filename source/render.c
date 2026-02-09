@@ -142,7 +142,7 @@ void render_sprites(const GameState* gs) {
             ATTR0_WIDE | ATTR0_4BPP,
             ATTR1_SIZE_64 | flip,
             ATTR2_PALBANK(PB_PLAYER) | ATTR2_ID(TID_PLAYER_DEAD));
-        obj_set_pos(&obj_buffer[OAM_PLAYER], px, PLAYER_RENDER_Y);
+        obj_set_pos(&obj_buffer[OAM_PLAYER], px, SCREEN_H - 32); /* 64x32 바닥 정렬 */
     }
 
     /* 충돌 이펙트 슬롯 초기화 */
@@ -349,11 +349,16 @@ void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
     int go_title_x = SCREEN_W / 4 - NAV_TEXT_W / 2;
     int go_retry_x = SCREEN_W * 3 / 4 - NAV_TEXT_W / 2;
 
-    /* 게임플레이 스프라이트 우선순위 1 (UI 뒤로) */
+    /* BG2를 PRIO 2로 내려서 PRIO(1) 게임스프라이트도 배경 앞에 표시 */
+    REG_BG2CNT = (REG_BG2CNT & ~BG_PRIO_MASK) | BG_PRIO(2);
+
+    /* 게임플레이 스프라이트 우선순위 1 (PRIO(0) UI 뒤, BG2 앞) */
     obj_buffer[OAM_PLAYER].attr2 = (obj_buffer[OAM_PLAYER].attr2 & ~ATTR2_PRIO_MASK) | ATTR2_PRIO(1);
     obj_buffer[OAM_ITEM].attr2 = (obj_buffer[OAM_ITEM].attr2 & ~ATTR2_PRIO_MASK) | ATTR2_PRIO(1);
     for (i = 0; i < MAX_CATS; i++)
         obj_buffer[OAM_CAT_START + i].attr2 = (obj_buffer[OAM_CAT_START + i].attr2 & ~ATTR2_PRIO_MASK) | ATTR2_PRIO(1);
+    for (i = 0; i < OAM_HIT_COUNT; i++)
+        obj_buffer[OAM_HIT_START + i].attr2 = (obj_buffer[OAM_HIT_START + i].attr2 & ~ATTR2_PRIO_MASK) | ATTR2_PRIO(1);
 
     /* 등급 (64x32 + 16x16) */
     obj_set_attr(&obj_buffer[OAM_FACE],
