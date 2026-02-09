@@ -72,9 +72,9 @@ def main():
     run_grit('spr_face_hurt.png', 'spr_face_hurt', spr_opts)
     run_grit('spr_face_dead.png', 'spr_face_dead', spr_opts)
 
-    # 폰트 (4bpp 타일, 8x8 per char)
+    # 폰트 (4bpp 타일, 16x16 메타타일 = 2x2)
     print("\n[폰트 4bpp]")
-    font_opts = ['-gB4', '-gt', '-gTFF00FF', '-pn16', '-Mw1', '-Mh1', '-p', '-ftc']
+    font_opts = ['-gB4', '-gt', '-gTFF00FF', '-pn16', '-Mw2', '-Mh2', '-p', '-ftc']
     run_grit('font_numbers.png', 'font_numbers', font_opts)
 
     print("\n=== grit 변환 완료 ===")

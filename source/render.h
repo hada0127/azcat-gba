@@ -82,7 +82,7 @@
 #define HUD_FACE_X      207  /* 240-32-1 = 오른쪽 1px 여백 */
 #define HUD_FACE_Y      1    /* 위쪽 1px 여백 */
 #define HUD_BOMB_X      207  /* 얼굴 왼쪽 맞춤 */
-#define HUD_BOMB_Y      22   /* 얼굴 가시 영역 왼쪽 하단 겹침 */
+#define HUD_BOMB_Y      18   /* 얼굴 가시 영역 왼쪽 하단 겹침 */
 #define HUD_SCORE_X     88  /* 중앙 (240-5*12-4)/2 */
 #define HUD_SCORE_Y     0   /* 상단 */
 #define HUD_DIGIT_SPACE 12  /* 16x16 숫자 간격 */
