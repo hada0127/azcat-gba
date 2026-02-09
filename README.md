@@ -4,7 +4,7 @@
 
 ## About
 
-Back in 2003, this game was originally made for the **GP32** handheld. Players dodge cats raining from the sky in an increasingly frantic avoidance game.
+Back in 2003, this game was originally made for the **GP32** handheld as a fan game inspired by **Azumanga Daioh** (아즈망가 대왕). Players dodge cats raining from the sky in an increasingly frantic avoidance game.
 
 In 2026, it has been rebuilt from scratch in C for the **Game Boy Advance**, faithfully recreating the original gameplay on real GBA hardware using devkitARM and libtonc.
 
