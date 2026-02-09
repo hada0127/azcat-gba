@@ -1,12 +1,12 @@
 # azcat-gba
 
-**Ah! Dodge the Cats: Grand Master** (아! 고양이를 피해라 대왕) — a Game Boy Advance port of a 2003 Korean Flash game.
+**Ah! Dodge the Cats: Grand Master** (아! 고양이를 피해라 대왕) — a Game Boy Advance port of a 2003 GP32 game.
 
 ## About
 
-Back in 2003, this game was originally created as a Flash (SWF) title for the **GP32** handheld by Cherry Project (taRu). Players dodge cats raining from the sky in an increasingly frantic avoidance game.
+Back in 2003, this game was originally made for the **GP32** handheld. Players dodge cats raining from the sky in an increasingly frantic avoidance game.
 
-In 2026, the game has been rebuilt from scratch in C for the **Game Boy Advance**, faithfully recreating the original gameplay on real GBA hardware using devkitARM and libtonc.
+In 2026, it has been rebuilt from scratch in C for the **Game Boy Advance**, faithfully recreating the original gameplay on real GBA hardware using devkitARM and libtonc.
 
 ## How to Play
 
@@ -89,7 +89,7 @@ Use any GBA emulator (e.g., [mGBA](https://mgba.io/)) or flash to a GBA cartridg
 
 ## Credits
 
-- **Original Game** (2003, GP32/Flash): Cherry Project (taRu)
+- **Original Game** (2003, GP32): taRu
 - **GBA Port** (2026): taRu, with assistance from Claude (Anthropic)
 
 ## License
