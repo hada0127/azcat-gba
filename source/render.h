@@ -10,8 +10,8 @@
 /* ── OAM 슬롯 할당 (낮은 인덱스 = 앞에 표시) ── */
 /* 레이어: UI > 히트이펙트 > 아이템 > 고양이 > 플레이어 */
 #define OAM_BOMB_ICON   0   /* 폭탄 보유 표시 (최전면) */
-#define OAM_FACE        1
-#define OAM_SCORE_START 2   /* 2-6: 5자리 점수 */
+#define OAM_SCORE_START 1   /* 1-5: 5자리 점수 */
+#define OAM_FACE        6   /* 얼굴 (폭탄 아이콘보다 뒤) */
 #define OAM_HIT_START   7   /* 7-10: 충돌 이펙트 (최대 4개) */
 #define OAM_HIT_COUNT   4
 #define OAM_ITEM        11
@@ -81,8 +81,8 @@
 /* HUD 좌표 */
 #define HUD_FACE_X      207  /* 240-32-1 = 오른쪽 1px 여백 */
 #define HUD_FACE_Y      1    /* 위쪽 1px 여백 */
-#define HUD_BOMB_X      215  /* 얼굴 중앙 X (207+8) */
-#define HUD_BOMB_Y      20   /* 얼굴 가시 영역 하단부 겹침 */
+#define HUD_BOMB_X      207  /* 얼굴 왼쪽 맞춤 */
+#define HUD_BOMB_Y      22   /* 얼굴 가시 영역 왼쪽 하단 겹침 */
 #define HUD_SCORE_X     88  /* 중앙 (240-5*12-4)/2 */
 #define HUD_SCORE_Y     0   /* 상단 */
 #define HUD_DIGIT_SPACE 12  /* 16x16 숫자 간격 */
