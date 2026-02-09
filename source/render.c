@@ -127,6 +127,17 @@ void render_set_title_bg(void) {
 void render_sprites(const GameState* gs) {
     int i;
 
+    /* 폭탄 활성: 게임 스프라이트 전부 숨김 (폭탄 BG가 전체화면) */
+    if (bomb_is_active(&gs->bomb)) {
+        obj_hide(&obj_buffer[OAM_PLAYER]);
+        for (i = 0; i < MAX_CATS; i++)
+            obj_hide(&obj_buffer[OAM_CAT_START + i]);
+        obj_hide(&obj_buffer[OAM_ITEM]);
+        for (i = 0; i < OAM_HIT_COUNT; i++)
+            obj_hide(&obj_buffer[OAM_HIT_START + i]);
+        return;
+    }
+
     /* 플레이어 */
     if (gs->player.state == 0) {
         int px = FP_TO_INT(gs->player.x);

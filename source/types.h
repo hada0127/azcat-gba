@@ -39,8 +39,8 @@
 #define CAT_LAND_Y          FP(131)  /* 바닥=157, OAM bottom=131+26=157 */
 #define CAT_HIT_Y_MIN       FP(96)
 #define CAT_HIT_Y_MAX       FP(131)  /* = CAT_LAND_Y */
-#define CAT_GRAVITY         FP_FROM_FLOAT_CONST(0.08f)   /* 0.4/5 */
-#define CAT_BASE_FALL       FP_FROM_FLOAT_CONST(0.16f)   /* 0.8/5 */
+#define CAT_GRAVITY         FP_FROM_FLOAT_CONST(0.06f)   /* 0.3/5 */
+#define CAT_BASE_FALL       FP_FROM_FLOAT_CONST(0.12f)   /* 0.6/5 */
 #define CAT_SIT_FRAMES      15  /* 착지 체류 프레임 (0.25초@60fps) */
 #define CAT_HIT_FRAMES      15  /* 충돌 이펙트 지속 프레임 */
 
