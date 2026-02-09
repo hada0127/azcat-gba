@@ -14,14 +14,14 @@ void test_bomb_init(void) {
 void test_bomb_use_with_have(void) {
     bomb_init(&bomb);
     bomb.have = 1;
-    bomb_try_use(&bomb, KEY_L);
+    bomb_try_use(&bomb, KEY_R);
     TEST_ASSERT_EQUAL_INT(1, bomb.use);
     TEST_ASSERT_EQUAL_INT(0, bomb.have);
 }
 
 void test_bomb_use_without_have(void) {
     bomb_init(&bomb);
-    bomb_try_use(&bomb, KEY_L);
+    bomb_try_use(&bomb, KEY_R);
     TEST_ASSERT_EQUAL_INT(0, bomb.use);
 }
 
@@ -36,7 +36,7 @@ void test_bomb_use_wrong_key(void) {
 void test_bomb_timer_expires(void) {
     bomb_init(&bomb);
     bomb.have = 1;
-    bomb_try_use(&bomb, KEY_L);
+    bomb_try_use(&bomb, KEY_R);
     TEST_ASSERT_TRUE(bomb_is_active(&bomb));
 
     int i;
@@ -49,10 +49,10 @@ void test_bomb_timer_expires(void) {
 void test_bomb_no_double_use(void) {
     bomb_init(&bomb);
     bomb.have = 1;
-    bomb_try_use(&bomb, KEY_L);
+    bomb_try_use(&bomb, KEY_R);
     /* 이미 사용중, 다시 시도해도 변화 없음 */
     bomb.have = 1; /* 강제로 다시 줘도 */
-    bomb_try_use(&bomb, KEY_L);
+    bomb_try_use(&bomb, KEY_R);
     TEST_ASSERT_EQUAL_INT(1, bomb.use);
 }
 

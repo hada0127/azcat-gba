@@ -18,19 +18,18 @@ Dodge the cats falling from the sky. Each cat that lands on the ground scores yo
 
 | Button | Action |
 |--------|--------|
-| D-Pad Left | Move left (hold) |
-| D-Pad Right | Move right (hold) |
-| L Button | Use bomb (if available) |
+| D-Pad Left | Move left |
+| D-Pad Right | Move right |
+| R Button | Use bomb (if available) |
 | START | Start game (title screen) |
 
-Release the D-Pad to stop immediately.
 
 ### Game Over Navigation
 
 | Button | Action |
 |--------|--------|
-| D-Pad Left | Return to title |
-| D-Pad Right | Retry |
+| B Button | Return to title |
+| A Button | Retry |
 
 ### Items
 
@@ -72,7 +71,7 @@ When the game ends, you receive a rank based on your score — ranging from Grad
 make
 ```
 
-This produces `azcat.gba` (~245KB ROM).
+This produces `azcat.gba`.
 
 ### Running
 

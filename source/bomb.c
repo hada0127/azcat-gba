@@ -7,7 +7,7 @@ void bomb_init(Bomb* b) {
 }
 
 void bomb_try_use(Bomb* b, u16 keys_pressed) {
-    if ((keys_pressed & KEY_L) && b->have == 1 && b->use == 0) {
+    if ((keys_pressed & KEY_R) && b->have == 1 && b->use == 0) {
         b->use = 1;
         b->have = 0;
         b->timer = 0;
