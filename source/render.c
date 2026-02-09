@@ -343,10 +343,17 @@ void render_restore_face_tiles(void) {
 
 /* ── 게임오버 화면: UI를 OAM 스프라이트로 표시 ── */
 void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
+    int i;
     int go_grade_x = (SCREEN_W - GRADE_IMG_W) / 2;
-    int go_score_x = (SCREEN_W - 5 * HUD_DIGIT_SPACE) / 2;
+    int go_score_x = (SCREEN_W - (4 * HUD_DIGIT_SPACE + 16)) / 2; /* 실제 시각 너비 기준 */
     int go_title_x = SCREEN_W / 4 - NAV_TEXT_W / 2;
     int go_retry_x = SCREEN_W * 3 / 4 - NAV_TEXT_W / 2;
+
+    /* 게임플레이 스프라이트 우선순위 1 (UI 뒤로) */
+    obj_buffer[OAM_PLAYER].attr2 = (obj_buffer[OAM_PLAYER].attr2 & ~ATTR2_PRIO_MASK) | ATTR2_PRIO(1);
+    obj_buffer[OAM_ITEM].attr2 = (obj_buffer[OAM_ITEM].attr2 & ~ATTR2_PRIO_MASK) | ATTR2_PRIO(1);
+    for (i = 0; i < MAX_CATS; i++)
+        obj_buffer[OAM_CAT_START + i].attr2 = (obj_buffer[OAM_CAT_START + i].attr2 & ~ATTR2_PRIO_MASK) | ATTR2_PRIO(1);
 
     /* 등급 (64x32 + 16x16) */
     obj_set_attr(&obj_buffer[OAM_FACE],
@@ -362,27 +369,27 @@ void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
     /* 점수 (기존 폰트 타일 사용) */
     render_digits(gs->score, OAM_SCORE_START, go_score_x, GO_SCORE_Y);
 
-    /* 타이틀 네비 (64x32 + 16x16) */
-    obj_set_attr(&obj_buffer[OAM_HIT_START],
+    /* 타이틀 네비 (OAM 46~47, 게임플레이 스프라이트 위에 표시) */
+    obj_set_attr(&obj_buffer[46],
         ATTR0_WIDE | ATTR0_4BPP, ATTR1_SIZE_64,
         ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_TITLE1));
-    obj_set_pos(&obj_buffer[OAM_HIT_START], go_title_x, GO_NAV_Y);
+    obj_set_pos(&obj_buffer[46], go_title_x, GO_NAV_Y);
 
-    obj_set_attr(&obj_buffer[OAM_HIT_START + 1],
+    obj_set_attr(&obj_buffer[47],
         ATTR0_SQUARE | ATTR0_4BPP, ATTR1_SIZE_16,
         ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_TITLE2));
-    obj_set_pos(&obj_buffer[OAM_HIT_START + 1], go_title_x + 64, GO_NAV_Y);
+    obj_set_pos(&obj_buffer[47], go_title_x + 64, GO_NAV_Y);
 
-    /* 재도전 네비 (64x32 + 16x16) */
-    obj_set_attr(&obj_buffer[OAM_HIT_START + 2],
+    /* 재도전 네비 (OAM 48~49) */
+    obj_set_attr(&obj_buffer[48],
         ATTR0_WIDE | ATTR0_4BPP, ATTR1_SIZE_64,
         ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_RETRY1));
-    obj_set_pos(&obj_buffer[OAM_HIT_START + 2], go_retry_x, GO_NAV_Y);
+    obj_set_pos(&obj_buffer[48], go_retry_x, GO_NAV_Y);
 
-    obj_set_attr(&obj_buffer[OAM_HIT_START + 3],
+    obj_set_attr(&obj_buffer[49],
         ATTR0_SQUARE | ATTR0_4BPP, ATTR1_SIZE_16,
         ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_RETRY2));
-    obj_set_pos(&obj_buffer[OAM_HIT_START + 3], go_retry_x + 64, GO_NAV_Y);
+    obj_set_pos(&obj_buffer[49], go_retry_x + 64, GO_NAV_Y);
 }
 
 /* ── 모든 스프라이트 숨기기 ── */

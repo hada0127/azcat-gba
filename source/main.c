@@ -118,6 +118,7 @@ int main(void) {
                 prev_state = STATE_GAMEOVER;
                 go_input_delay = 30; /* 0.5초 입력 무시 */
                 sound_play_sfx(SFX_GAMEOVER);
+                render_sprites(&gs); /* 사망 상태 스프라이트 유지 */
                 render_gameover_load_ui(go_result.grade_index);
                 render_gameover_screen(&gs, &go_result);
                 break;
