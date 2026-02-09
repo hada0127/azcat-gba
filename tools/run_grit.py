@@ -64,6 +64,8 @@ def main():
     run_grit('spr_item_speed.png', 'spr_item_speed', spr_opts)
     # 폭발 32x32
     run_grit('spr_explosion.png', 'spr_explosion', spr_opts)
+    # 폭탄 아이콘 16x16 (HUD)
+    run_grit('spr_bomb_icon.png', 'spr_bomb_icon', spr_opts)
     # 얼굴 32x32 (HUD)
     run_grit('spr_face_happy.png', 'spr_face_happy', spr_opts)
     run_grit('spr_face_normal.png', 'spr_face_normal', spr_opts)

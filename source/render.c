@@ -73,7 +73,7 @@ void render_init(void) {
     memcpy32(&tile_mem[5][320], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);    /* 832: 32타일 */
     memcpy32(&tile_mem[5][352], spr_face_deadTiles,    spr_face_deadTilesLen / 4);    /* 864: 32타일 */
     memcpy32(&tile_mem[5][384], font_numbersTiles,     font_numbersTilesLen / 4);     /* 896: 40타일 16x16 */
-    memcpy32(&tile_mem[5][424], spr_bomb_iconTiles,   spr_bomb_iconTilesLen / 4);    /* 936: 16타일 32x32 */
+    memcpy32(&tile_mem[5][424], spr_bomb_iconTiles,   spr_bomb_iconTilesLen / 4);    /* 936: 4타일 16x16 */
 
     /* OBJ 팔레트 로드 (walk0 팔레트 = 공유 팔레트) */
     memcpy16(pal_obj_bank[PB_PLAYER],      spr_player_walk0Pal, spr_player_walk0PalLen / 2);
