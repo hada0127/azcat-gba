@@ -77,7 +77,6 @@ int main(void) {
         case STATE_PLAY: {
             u8 prev_life = gs.player.life;
             u8 prev_bomb_timer = gs.bomb.timer;
-            u8 item_was_active = gs.item.active;
 
             game_play_update(&gs, kd, kp);
 
@@ -87,8 +86,8 @@ int main(void) {
             /* 폭탄 사용 효과음 */
             if (gs.bomb.timer > 0 && prev_bomb_timer == 0)
                 sound_play_sfx(SFX_BOMB);
-            /* 아이템 획득 효과음 */
-            if (item_was_active && !gs.item.active)
+            /* 아이템 획득 효과음 (만료 시에는 재생 안함) */
+            if (gs.item_collected)
                 sound_play_sfx(SFX_ITEM);
 
             /* 배경 전환 감지 */

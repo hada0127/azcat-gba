@@ -17,6 +17,7 @@ typedef struct {
     Cat     cats[MAX_CATS];
     Item    item;
     Bomb    bomb;
+    u8      item_collected; /* 이번 프레임 아이템 획득 여부 */
 } GameState;
 
 void game_init(GameState* gs);

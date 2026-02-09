@@ -52,6 +52,7 @@ void game_play_update(GameState* gs, u16 keys_held, u16 keys_pressed) {
     }
 
     /* 아이템 업데이트 */
+    gs->item_collected = 0;
     if (!ba) {
         u8 item_type = item_update(&gs->item, &gs->item_cnt, gs->player.x);
         if (item_type > 0) {
@@ -60,6 +61,7 @@ void game_play_update(GameState* gs, u16 keys_held, u16 keys_pressed) {
                               &gs->bomb.have, &gs->player.player_accel,
                               &delta);
             gs->score += delta;
+            gs->item_collected = 1;
         }
     }
 
