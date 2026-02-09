@@ -38,13 +38,18 @@ static OBJ_ATTR obj_buffer[128];
 void render_init(void) {
     oam_init(obj_buffer, 128);
 
-    /* OBJ Affine 매트릭스 0번: 2/3 스케일링 */
+    /* OBJ Affine 매트릭스: 2/3 스케일링 (0=normal, 1=hflip) */
     {
         OBJ_AFFINE *oa = (OBJ_AFFINE*)obj_buffer;
         oa[AFFINE_IDX].pa = AFFINE_SCALE;
         oa[AFFINE_IDX].pb = 0;
         oa[AFFINE_IDX].pc = 0;
         oa[AFFINE_IDX].pd = AFFINE_SCALE;
+        /* affine에서 HFLIP 비트는 인덱스로 재해석되므로 별도 매트릭스 필요 */
+        oa[AFFINE_IDX_FLIP].pa = -AFFINE_SCALE;
+        oa[AFFINE_IDX_FLIP].pb = 0;
+        oa[AFFINE_IDX_FLIP].pc = 0;
+        oa[AFFINE_IDX_FLIP].pd = AFFINE_SCALE;
     }
 
     /* Mode 4에서 OBJ 타일은 tile_mem[5] (ID 512~)부터 안전 */
@@ -125,7 +130,7 @@ void render_sprites(const GameState* gs) {
     /* 플레이어 */
     if (gs->player.state == 0) {
         int px = FP_TO_INT(gs->player.x);
-        u16 flip = (gs->player.direction == DIR_RIGHT) ? ATTR1_HFLIP : 0;
+        u16 aff = (gs->player.direction == DIR_RIGHT) ? AFFINE_IDX_FLIP : AFFINE_IDX;
 
         /* 걷기 애니메이션: 정지=W0, 이동=W0→W1→W2 순환 (6프레임마다 전환) */
         u16 tid;
@@ -140,16 +145,16 @@ void render_sprites(const GameState* gs) {
         /* 32x64 TALL OAM + affine 2/3 스케일링 */
         obj_set_attr(&obj_buffer[OAM_PLAYER],
             ATTR0_TALL | ATTR0_4BPP | ATTR0_AFF,
-            ATTR1_SIZE_64 | ATTR1_AFF_ID(AFFINE_IDX) | flip,
+            ATTR1_SIZE_64 | ATTR1_AFF_ID(aff),
             ATTR2_PALBANK(PB_PLAYER) | ATTR2_ID(tid));
         obj_set_pos(&obj_buffer[OAM_PLAYER], px, PLAYER_RENDER_Y);
     } else {
         /* 사망: 64x32 WIDE + affine 2/3 스케일링 */
         int px = FP_TO_INT(gs->player.x) - 16;  /* 중앙 보정 */
-        u16 flip = (gs->player.direction == DIR_RIGHT) ? ATTR1_HFLIP : 0;
+        u16 aff = (gs->player.direction == DIR_RIGHT) ? AFFINE_IDX_FLIP : AFFINE_IDX;
         obj_set_attr(&obj_buffer[OAM_PLAYER],
             ATTR0_WIDE | ATTR0_4BPP | ATTR0_AFF,
-            ATTR1_SIZE_64 | ATTR1_AFF_ID(AFFINE_IDX) | flip,
+            ATTR1_SIZE_64 | ATTR1_AFF_ID(aff),
             ATTR2_PALBANK(PB_PLAYER) | ATTR2_ID(TID_PLAYER_DEAD));
         obj_set_pos(&obj_buffer[OAM_PLAYER], px, 131);
     }

@@ -74,6 +74,7 @@
 /* OBJ Affine 스케일링 (게임 스프라이트 2/3 표시) */
 #define AFFINE_SCALE    384  /* 3/2 in .8 fixed = 2/3 display size */
 #define AFFINE_IDX      0    /* 게임 스프라이트 공용 affine 매트릭스 인덱스 */
+#define AFFINE_IDX_FLIP 1    /* 좌우반전 affine (HFLIP 대체) */
 
 /* HUD 좌표 */
 #define HUD_FACE_X      207  /* 240-32-1 = 오른쪽 1px 여백 */
