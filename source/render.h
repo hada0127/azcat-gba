@@ -86,10 +86,8 @@ void render_sprites(const GameState* gs);
 void render_hud(const GameState* gs);
 void render_title_hud(s16 hiscore);
 void render_gameover_screen(const GameState* gs, const GameOverResult* result);
-void render_gameover_grade(u8 grade_index);
-void render_gameover_score(s16 score);
-void render_gameover_nav(void);
-void render_darken_bg_palette(void);
+void render_gameover_load_ui(u8 grade_index);
+void render_restore_face_tiles(void);
 void render_hide_all(void);
 void render_oam_update(void);
 

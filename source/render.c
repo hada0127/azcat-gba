@@ -30,7 +30,6 @@
 #include "font_numbers.h"
 #include "grade_images.h"
 #include "nav_text.h"
-#include "score_digits.h"
 
 /* OAM 섀도우 버퍼 */
 static OBJ_ATTR obj_buffer[128];
@@ -267,151 +266,123 @@ void render_title_hud(s16 hiscore) {
     obj_hide(&obj_buffer[OAM_BOMB_ICON]);
 }
 
-/* ── 배경 팔레트 어둡게 (밝기 50%) ── */
-void render_darken_bg_palette(void) {
-    int i;
-    for (i = 0; i < 256; i++) {
-        u16 c = pal_bg_mem[i];
-        u16 r = (c & 0x1F) >> 1;
-        u16 g = ((c >> 5) & 0x1F) >> 1;
-        u16 b = ((c >> 10) & 0x1F) >> 1;
-        pal_bg_mem[i] = r | (g << 5) | (b << 10);
-    }
-}
+/* ── 게임오버 UI: OAM 스프라이트 기반 (투명 배경, 스프라이트 위에 표시) ── */
 
-/* ── 등급 이미지를 프레임버퍼에 블릿 (Mode 4, 팔레트 인덱싱) ── */
-#define GRADE_PAL_BASE 244  /* BG 팔레트 시작 오프셋 */
+/* 게임오버 UI OBJ 팔레트 뱅크 */
+#define PB_GO_UI        14
 
-void render_gameover_grade(u8 grade_index) {
-    if (grade_index >= GRADE_COUNT) return;
-    int i;
+/* 게임오버 타일 ID (얼굴 타일 영역 재사용) */
+#define TID_GO_GRADE1   768   /* 64x32, 32 tiles (face_happy 덮어씀) */
+#define TID_GO_GRADE2   800   /* 16x16, 4 tiles */
+#define TID_GO_TITLE1   804   /* 64x32, 32 tiles */
+#define TID_GO_TITLE2   836   /* 16x16, 4 tiles */
+#define TID_GO_RETRY1   840   /* 64x32, 32 tiles */
+#define TID_GO_RETRY2   872   /* 16x16, 4 tiles */
 
-    /* 등급 공유 팔레트를 BG 팔레트에 로드 */
-    for (i = 0; i < GRADE_PAL_COUNT; i++)
-        pal_bg_mem[GRADE_PAL_BASE + i] = grade_palette[i];
+/* 비트맵(0/1/2) → 4bpp OBJ 타일 변환 (영역 지정) */
+static void bitmap_to_obj_tiles(const unsigned char* src, int src_w, int src_h,
+                                int ox, int oy, u32* dst, int spr_w, int spr_h) {
+    int cols = spr_w / 8;
+    int rows = spr_h / 8;
+    int tr, tc, py, px;
 
-    const unsigned char* src = grade_image_data[grade_index];
-    int ox = (SCREEN_W - GRADE_IMG_W) / 2;
-    int oy = GO_GRADE_Y;
-
-    u16* page0 = (u16*)0x06000000;
-    u16* page1 = (u16*)0x0600A000;
-
-    int y, x;
-    for (y = 0; y < GRADE_IMG_H; y++) {
-        int row = oy + y;
-        if (row >= SCREEN_H) break;
-        u16* dst0 = &page0[row * (SCREEN_W / 2)];
-        u16* dst1 = &page1[row * (SCREEN_W / 2)];
-        for (x = 0; x < GRADE_IMG_W; x += 2) {
-            int px = ox + x;
-            if (px >= SCREEN_W - 1) break;
-            u8 v_lo = src[y * GRADE_IMG_W + x];
-            u8 v_hi = src[y * GRADE_IMG_W + x + 1];
-            int idx = px / 2;
-            /* 0=투명(배경유지), 1~N=팔레트색 */
-            u16 old = dst0[idx];
-            u8 lo = v_lo ? (u8)(GRADE_PAL_BASE + v_lo - 1) : (u8)(old & 0xFF);
-            u8 hi = v_hi ? (u8)(GRADE_PAL_BASE + v_hi - 1) : (u8)(old >> 8);
-            u16 val = (hi << 8) | lo;
-            dst0[idx] = val;
-            dst1[idx] = val;
-        }
-    }
-}
-
-/* ── 네비 텍스트를 프레임버퍼에 블릿 (등급과 동일 팔레트) ── */
-void render_gameover_nav(void) {
-    u16* page0 = (u16*)0x06000000;
-    u16* page1 = (u16*)0x0600A000;
-
-    const unsigned char* srcs[2] = { nav_title_data, nav_retry_data };
-    int offsets_x[2] = {
-        SCREEN_W / 4 - NAV_TEXT_W / 2,
-        SCREEN_W * 3 / 4 - NAV_TEXT_W / 2
-    };
-
-    int n, y, x;
-    for (n = 0; n < 2; n++) {
-        const unsigned char* src = srcs[n];
-        int ox = offsets_x[n];
-        for (y = 0; y < NAV_TEXT_HEIGHT; y++) {
-            int row = GO_NAV_Y + y;
-            if (row >= SCREEN_H) break;
-            u16* dst0 = &page0[row * (SCREEN_W / 2)];
-            u16* dst1 = &page1[row * (SCREEN_W / 2)];
-            for (x = 0; x < NAV_TEXT_W; x += 2) {
-                int px = ox + x;
-                if (px < 0 || px >= SCREEN_W - 1) continue;
-                u8 v_lo = src[y * NAV_TEXT_W + x];
-                u8 v_hi = src[y * NAV_TEXT_W + x + 1];
-                if (v_lo || v_hi) {
-                    int idx = px / 2;
-                    u16 old = dst0[idx];
-                    u8 lo = v_lo ? (u8)(GRADE_PAL_BASE + v_lo - 1) : (u8)(old & 0xFF);
-                    u8 hi = v_hi ? (u8)(GRADE_PAL_BASE + v_hi - 1) : (u8)(old >> 8);
-                    u16 val = (hi << 8) | lo;
-                    dst0[idx] = val;
-                    dst1[idx] = val;
+    for (tr = 0; tr < rows; tr++) {
+        for (tc = 0; tc < cols; tc++) {
+            u32* tile = &dst[(tr * cols + tc) * 8];
+            for (py = 0; py < 8; py++) {
+                int img_y = oy + tr * 8 + py;
+                u32 row_val = 0;
+                for (px = 0; px < 8; px++) {
+                    int img_x = ox + tc * 8 + px;
+                    u8 pix = (img_x >= 0 && img_x < src_w &&
+                              img_y >= 0 && img_y < src_h) ?
+                             src[img_y * src_w + img_x] : 0;
+                    row_val |= (pix & 0xF) << (px * 4);
                 }
+                tile[py] = row_val;
             }
         }
     }
 }
 
-/* ── 점수를 프레임버퍼에 블릿 (큰 사이즈, 흰색+검정 테두리) ── */
-void render_gameover_score(s16 score) {
-    char buf[6];
-    int d, y, x;
-    hud_format_score(score, buf);
+/* 게임오버 UI 타일+팔레트 로드 (얼굴 VRAM 영역에 덮어씀) */
+void render_gameover_load_ui(u8 grade_index) {
+    /* UI 전용 OBJ 팔레트: 0=투명, 1=흰색, 2=검정 */
+    pal_obj_bank[PB_GO_UI][1] = 0x7FFF;
+    pal_obj_bank[PB_GO_UI][2] = 0x0000;
 
-    int total_w = 5 * SCORE_DIGIT_W;
-    int ox = (SCREEN_W - total_w) / 2;
-    int oy = GO_SCORE_Y;
-
-    u16* page0 = (u16*)0x06000000;
-    u16* page1 = (u16*)0x0600A000;
-
-    for (d = 0; d < 5; d++) {
-        int digit = buf[d] - '0';
-        const unsigned char* src = score_digit_data[digit];
-        int dx = ox + d * SCORE_DIGIT_W;
-
-        for (y = 0; y < SCORE_DIGIT_H; y++) {
-            int row = oy + y;
-            if (row >= SCREEN_H) break;
-            u16* dst0 = &page0[row * (SCREEN_W / 2)];
-            u16* dst1 = &page1[row * (SCREEN_W / 2)];
-            for (x = 0; x < SCORE_DIGIT_W; x += 2) {
-                int px = dx + x;
-                if (px >= SCREEN_W - 1) break;
-                u8 v_lo = src[y * SCORE_DIGIT_W + x];
-                u8 v_hi = src[y * SCORE_DIGIT_W + x + 1];
-                if (v_lo || v_hi) {
-                    int idx = px / 2;
-                    u16 old = dst0[idx];
-                    u8 lo = v_lo ? (u8)(GRADE_PAL_BASE + v_lo - 1) : (u8)(old & 0xFF);
-                    u8 hi = v_hi ? (u8)(GRADE_PAL_BASE + v_hi - 1) : (u8)(old >> 8);
-                    u16 val = (hi << 8) | lo;
-                    dst0[idx] = val;
-                    dst1[idx] = val;
-                }
-            }
-        }
+    /* 등급 → 64x32 + 16x16 타일 */
+    if (grade_index < GRADE_COUNT) {
+        const unsigned char* gsrc = grade_image_data[grade_index];
+        bitmap_to_obj_tiles(gsrc, GRADE_IMG_W, GRADE_IMG_H, 0, 0,
+            (u32*)&tile_mem[5][TID_GO_GRADE1 - 512], 64, 32);
+        bitmap_to_obj_tiles(gsrc, GRADE_IMG_W, GRADE_IMG_H, 64, 0,
+            (u32*)&tile_mem[5][TID_GO_GRADE2 - 512], 16, 16);
     }
+
+    /* 타이틀 네비 → 64x32 + 16x16 타일 */
+    bitmap_to_obj_tiles(nav_title_data, NAV_TEXT_W, NAV_TEXT_HEIGHT, 0, 0,
+        (u32*)&tile_mem[5][TID_GO_TITLE1 - 512], 64, 32);
+    bitmap_to_obj_tiles(nav_title_data, NAV_TEXT_W, NAV_TEXT_HEIGHT, 64, 0,
+        (u32*)&tile_mem[5][TID_GO_TITLE2 - 512], 16, 16);
+
+    /* 재도전 네비 → 64x32 + 16x16 타일 */
+    bitmap_to_obj_tiles(nav_retry_data, NAV_TEXT_W, NAV_TEXT_HEIGHT, 0, 0,
+        (u32*)&tile_mem[5][TID_GO_RETRY1 - 512], 64, 32);
+    bitmap_to_obj_tiles(nav_retry_data, NAV_TEXT_W, NAV_TEXT_HEIGHT, 64, 0,
+        (u32*)&tile_mem[5][TID_GO_RETRY2 - 512], 16, 16);
 }
 
-/* ── 게임오버 화면: UI OAM 숨기고 게임플레이 스프라이트 유지 ── */
+/* 얼굴 타일 복원 (게임오버 → 플레이 전환 시) */
+void render_restore_face_tiles(void) {
+    memcpy32(&tile_mem[5][256], spr_face_happyTiles,  spr_face_happyTilesLen / 4);
+    memcpy32(&tile_mem[5][288], spr_face_normalTiles, spr_face_normalTilesLen / 4);
+    memcpy32(&tile_mem[5][320], spr_face_hurtTiles,   spr_face_hurtTilesLen / 4);
+    memcpy32(&tile_mem[5][352], spr_face_deadTiles,   spr_face_deadTilesLen / 4);
+}
+
+/* ── 게임오버 화면: UI를 OAM 스프라이트로 표시 ── */
 void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
-    int i;
+    int go_grade_x = (SCREEN_W - GRADE_IMG_W) / 2;
+    int go_score_x = (SCREEN_W - 5 * HUD_DIGIT_SPACE) / 2;
+    int go_title_x = SCREEN_W / 4 - NAV_TEXT_W / 2;
+    int go_retry_x = SCREEN_W * 3 / 4 - NAV_TEXT_W / 2;
 
-    /* UI/이펙트 OAM 숨김 (프레임버퍼 UI로 대체) */
-    obj_hide(&obj_buffer[OAM_FACE]);
-    for (i = 0; i < 5; i++)
-        obj_hide(&obj_buffer[OAM_SCORE_START + i]);
-    obj_hide(&obj_buffer[OAM_BOMB_ICON]);
-    for (i = 0; i < OAM_HIT_COUNT; i++)
-        obj_hide(&obj_buffer[OAM_HIT_START + i]);
+    /* 등급 (64x32 + 16x16) */
+    obj_set_attr(&obj_buffer[OAM_FACE],
+        ATTR0_WIDE | ATTR0_4BPP, ATTR1_SIZE_64,
+        ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_GRADE1));
+    obj_set_pos(&obj_buffer[OAM_FACE], go_grade_x, GO_GRADE_Y);
+
+    obj_set_attr(&obj_buffer[OAM_BOMB_ICON],
+        ATTR0_SQUARE | ATTR0_4BPP, ATTR1_SIZE_16,
+        ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_GRADE2));
+    obj_set_pos(&obj_buffer[OAM_BOMB_ICON], go_grade_x + 64, GO_GRADE_Y);
+
+    /* 점수 (기존 폰트 타일 사용) */
+    render_digits(gs->score, OAM_SCORE_START, go_score_x, GO_SCORE_Y);
+
+    /* 타이틀 네비 (64x32 + 16x16) */
+    obj_set_attr(&obj_buffer[OAM_HIT_START],
+        ATTR0_WIDE | ATTR0_4BPP, ATTR1_SIZE_64,
+        ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_TITLE1));
+    obj_set_pos(&obj_buffer[OAM_HIT_START], go_title_x, GO_NAV_Y);
+
+    obj_set_attr(&obj_buffer[OAM_HIT_START + 1],
+        ATTR0_SQUARE | ATTR0_4BPP, ATTR1_SIZE_16,
+        ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_TITLE2));
+    obj_set_pos(&obj_buffer[OAM_HIT_START + 1], go_title_x + 64, GO_NAV_Y);
+
+    /* 재도전 네비 (64x32 + 16x16) */
+    obj_set_attr(&obj_buffer[OAM_HIT_START + 2],
+        ATTR0_WIDE | ATTR0_4BPP, ATTR1_SIZE_64,
+        ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_RETRY1));
+    obj_set_pos(&obj_buffer[OAM_HIT_START + 2], go_retry_x, GO_NAV_Y);
+
+    obj_set_attr(&obj_buffer[OAM_HIT_START + 3],
+        ATTR0_SQUARE | ATTR0_4BPP, ATTR1_SIZE_16,
+        ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_RETRY2));
+    obj_set_pos(&obj_buffer[OAM_HIT_START + 3], go_retry_x + 64, GO_NAV_Y);
 }
 
 /* ── 모든 스프라이트 숨기기 ── */
