@@ -8,7 +8,6 @@
 
 typedef struct {
     s32 x;              /* 고정소수점 X 좌표 */
-    s32 v_accel;        /* 이동 가속도 (키 홀드시 누적) */
     u8  player_accel;   /* 아이템으로 증가하는 추가 속도 (0~4) */
     u8  direction;      /* DIR_LEFT / DIR_RIGHT */
     u8  life;           /* HP (0~3) */

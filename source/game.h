@@ -17,12 +17,12 @@ typedef struct {
     Cat     cats[MAX_CATS];
     Item    item;
     Bomb    bomb;
-    u8      item_collected; /* 이번 프레임 아이템 획득 여부 */
 } GameState;
 
 void game_init(GameState* gs);
 void game_play_init(GameState* gs);
-void game_play_update(GameState* gs, u16 keys_held, u16 keys_pressed);
+/* 반환: 획득한 아이템 타입 (0=없음) */
+u8 game_play_update(GameState* gs, u16 keys_held, u16 keys_pressed);
 bool game_check_gameover(GameState* gs);
 
 #endif /* GAME_H */

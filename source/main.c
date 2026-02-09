@@ -78,7 +78,7 @@ int main(void) {
             u8 prev_life = gs.player.life;
             u8 prev_bomb_timer = gs.bomb.timer;
 
-            game_play_update(&gs, kd, kp);
+            u8 collected = game_play_update(&gs, kd, kp);
 
             /* 피격 효과음 */
             if (gs.player.life < prev_life && gs.state == STATE_PLAY)
@@ -86,8 +86,8 @@ int main(void) {
             /* 폭탄 사용 효과음 */
             if (gs.bomb.timer > 0 && prev_bomb_timer == 0)
                 sound_play_sfx(SFX_BOMB);
-            /* 아이템 획득 효과음 (만료 시에는 재생 안함) */
-            if (gs.item_collected)
+            /* 아이템 획득 효과음 (반환값 > 0 = 실제 획득) */
+            if (collected > 0)
                 sound_play_sfx(SFX_ITEM);
 
             /* 배경 전환 감지 */
