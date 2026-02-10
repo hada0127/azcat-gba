@@ -76,9 +76,9 @@
 /* HUD 좌표 */
 #define HUD_HEART_X      2   /* 하트 시작 X (좌측 2px 여백) */
 #define HUD_HEART_Y      2   /* 하트 Y (상단 2px 여백) */
-#define HUD_HEART_SPACE  17  /* 하트 간격 (16+1) */
+#define HUD_HEART_SPACE  12  /* 하트 간격 (11px 콘텐츠 + 1px 간격) */
 #define HUD_HBOMB_X      2   /* 폭탄 아이콘 X */
-#define HUD_HBOMB_Y      19  /* 하트 아래줄 (2+16+1) */
+#define HUD_HBOMB_Y      14  /* 하트 아래줄 (2+11+1) */
 #define HUD_SCORE_X     88  /* 중앙 (240-5*12-4)/2 */
 #define HUD_SCORE_Y     0   /* 상단 */
 #define HUD_DIGIT_SPACE 12  /* 16x16 숫자 간격 */
