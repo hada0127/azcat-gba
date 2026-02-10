@@ -10,19 +10,30 @@
 #include "snd_item.h"
 #include "snd_gameover.h"
 
-/* 8192Hz 타이머 값 */
-#define TIMER_8192HZ  0xF800
-
 /*
- * 버퍼 크기: 8192/60 ≈ 137 샘플/프레임
- * 16의 배수 + 여유분 = 176
+ * 더블 버퍼 오디오 시스템
+ *
+ * 타이머 주기 = 65536 - 0xF800 = 2048 CPU cycles
+ * VBlank 주기 = 228 × 308 × 4 = 280896 CPU cycles
+ * 프레임당 샘플 = 280896 / 2048 = 137.15625 = 137 + 5/32
+ *
+ * 분수 누적으로 137/138 교대 배분하여 드리프트 없이 정확한 재생.
+ * 버퍼는 BUF_SIZE(144)로 실제 소비량보다 약간 크게 잡아
+ * DMA가 타이밍 오차로 1~2 샘플 더 읽어도 유효 데이터를 읽도록 함.
  */
-#define BUF_SIZE  176
 
-/* 더블 버퍼 (DMA가 읽는 대상, RAM) */
-static s8 buf_a[2][BUF_SIZE] ALIGN(4);  /* BGM 채널 */
-static s8 buf_b[2][BUF_SIZE] ALIGN(4);  /* SFX 채널 */
+#define TIMER_VAL      0xF800
+
+#define SPF_WHOLE      137   /* 프레임당 샘플 정수부 */
+#define SPF_FRAC_NUM   5     /* 분수부 분자 (5/32) */
+#define SPF_FRAC_DEN   32    /* 분수부 분모 */
+#define BUF_SIZE       144   /* 버퍼 크기: 138 + 여유, 16의 배수 */
+
+/* 더블 버퍼 */
+static s8 buf_a[2][BUF_SIZE] ALIGN(4);
+static s8 buf_b[2][BUF_SIZE] ALIGN(4);
 static u8 cur_buf;
+static u8 frac_acc;
 
 /* BGM 상태 */
 static const s8 *bgm_src;
@@ -38,21 +49,19 @@ static u32 sfx_len;
 void sound_init(void) {
     REG_SNDSTAT = SSTAT_ENABLE;
 
-    /* Direct Sound A+B: 100% 볼륨, 양쪽 스피커, 타이머 0 */
     REG_SNDDSCNT = SDS_A100 | SDS_B100
                  | SDS_AL | SDS_AR | SDS_BL | SDS_BR
                  | SDS_ATMR0 | SDS_BTMR0;
 
-    /* 타이머 0: 8192Hz */
-    REG_TM0D = TIMER_8192HZ;
+    REG_TM0D = TIMER_VAL;
     REG_TM0CNT = TM_ENABLE | TM_FREQ_SYS;
 
-    /* 버퍼 무음 초기화 */
     memset(buf_a, 0, sizeof(buf_a));
     memset(buf_b, 0, sizeof(buf_b));
     cur_buf = 0;
+    frac_acc = 0;
 
-    /* DMA 시작 (무음 버퍼) */
+    /* 무음 버퍼로 DMA 시작 */
     REG_DMA1SAD = (u32)buf_a[0];
     REG_DMA1DAD = (u32)&REG_FIFO_A;
     REG_DMA1CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
@@ -104,20 +113,33 @@ void sound_play_sfx(u8 sfx_id) {
 }
 
 void sound_update(void) {
+    /* 이번 프레임 소비 샘플 수 계산 (분수 누적) */
+    u32 spf = SPF_WHOLE;
+    frac_acc += SPF_FRAC_NUM;
+    if (frac_acc >= SPF_FRAC_DEN) {
+        frac_acc -= SPF_FRAC_DEN;
+        spf++;
+    }
+
     u8 next = cur_buf ^ 1;
 
     /* ── BGM 버퍼 채우기 ── */
     if (bgm_on) {
+        /*
+         * BUF_SIZE 샘플을 복사 (DMA 안전 마진 확보)
+         * 위치는 spf만큼만 전진 (실제 재생량에 맞춤)
+         */
         u32 left = bgm_len - bgm_pos;
         if (left >= BUF_SIZE) {
             memcpy(buf_a[next], bgm_src + bgm_pos, BUF_SIZE);
-            bgm_pos += BUF_SIZE;
         } else {
-            /* 루프: 나머지 복사 + 처음부터 이어 채우기 */
+            /* 루프 경계: 끝부분 + 처음부터 이어 복사 */
             memcpy(buf_a[next], bgm_src + bgm_pos, left);
             memcpy(buf_a[next] + left, bgm_src, BUF_SIZE - left);
-            bgm_pos = BUF_SIZE - left;
         }
+        bgm_pos += spf;
+        if (bgm_pos >= bgm_len)
+            bgm_pos -= bgm_len;
     } else {
         memset(buf_a[next], 0, BUF_SIZE);
     }
@@ -129,7 +151,7 @@ void sound_update(void) {
         memcpy(buf_b[next], sfx_src + sfx_pos, n);
         if (n < BUF_SIZE)
             memset(buf_b[next] + n, 0, BUF_SIZE - n);
-        sfx_pos += n;
+        sfx_pos += spf;
         if (sfx_pos >= sfx_len)
             sfx_len = 0;
     } else {
@@ -155,7 +177,6 @@ void sound_update(void) {
 void sound_stop(void) {
     bgm_on = 0;
     sfx_len = 0;
-    /* 다음 sound_update()에서 양 채널 버퍼가 0으로 채워짐 */
 }
 
 #else
