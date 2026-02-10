@@ -15,52 +15,55 @@
 /* BGM 총 프레임 수 */
 #define BGM_TOTAL_FRAMES  (SND_BGM_LEN * 60 / 8192)
 
-/* SFX 프레임 계산: +1 제거 (오버런 방지) */
+/* SFX 프레임 계산: 오버런 방지 위해 +1 없음 */
 #define SFX_FRAMES(len)   ((len) * 60 / 8192)
-
-/* 무음 버퍼: DMA가 항상 0을 읽도록 고정 소스 */
-static const u32 snd_silence ALIGN(4) = 0;
 
 /* 상태 */
 static u8  bgm_on;
 static u32 bgm_frames;
 static u16 sfx_frames_left;
 
-/* 채널을 무음 DMA로 전환 (DMA를 멈추지 않음 → 팝 노이즈 없음) */
-static void dma1_to_silence(void) {
+/* 채널 A 정지: DMA 멈추고 FIFO에 0 채우기 */
+static void stop_channel_a(void) {
     REG_DMA1CNT = 0;
     REG_SNDDSCNT |= SDS_ARESET;
-    REG_DMA1SAD = (u32)&snd_silence;
-    REG_DMA1DAD = (u32)&REG_FIFO_A;
-    REG_DMA1CNT = DMA_DST_FIXED | DMA_SRC_FIXED | DMA_REPEAT
-                | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
+    /* FIFO에 무음 주입 (8 words = FIFO 전체) */
+    REG_FIFO_A = 0;
+    REG_FIFO_A = 0;
+    REG_FIFO_A = 0;
+    REG_FIFO_A = 0;
+    REG_FIFO_A = 0;
+    REG_FIFO_A = 0;
+    REG_FIFO_A = 0;
+    REG_FIFO_A = 0;
 }
 
-static void dma2_to_silence(void) {
+/* 채널 B 정지: DMA 멈추고 FIFO에 0 채우기 */
+static void stop_channel_b(void) {
     REG_DMA2CNT = 0;
     REG_SNDDSCNT |= SDS_BRESET;
-    REG_DMA2SAD = (u32)&snd_silence;
-    REG_DMA2DAD = (u32)&REG_FIFO_B;
-    REG_DMA2CNT = DMA_DST_FIXED | DMA_SRC_FIXED | DMA_REPEAT
-                | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
+    REG_FIFO_B = 0;
+    REG_FIFO_B = 0;
+    REG_FIFO_B = 0;
+    REG_FIFO_B = 0;
+    REG_FIFO_B = 0;
+    REG_FIFO_B = 0;
+    REG_FIFO_B = 0;
+    REG_FIFO_B = 0;
 }
 
 void sound_init(void) {
     /* 마스터 사운드 활성화 */
     REG_SNDSTAT = SSTAT_ENABLE;
 
-    /* Direct Sound A+B: 100% 볼륨, 양쪽 스피커, 타이머 0 */
-    REG_SNDDSCNT = SDS_DMG100 | SDS_A100 | SDS_B100
+    /* Direct Sound A+B: DMG 볼륨 0(PSG 차단), DS 100%, 양쪽 스피커, 타이머 0 */
+    REG_SNDDSCNT = SDS_A100 | SDS_B100
                  | SDS_AL | SDS_AR | SDS_BL | SDS_BR
                  | SDS_ATMR0 | SDS_BTMR0;
 
-    /* 타이머 0: 8192Hz (항상 켜둠) */
+    /* 타이머 0: 8192Hz */
     REG_TM0D = TIMER_8192HZ;
     REG_TM0CNT = TM_ENABLE | TM_FREQ_SYS;
-
-    /* 양 채널 무음 DMA 시작 */
-    dma1_to_silence();
-    dma2_to_silence();
 
     bgm_on = 0;
     bgm_frames = 0;
@@ -70,7 +73,6 @@ void sound_init(void) {
 void sound_play_bgm(u8 track) {
     (void)track;
 
-    /* DMA1 → FIFO A 리셋 → 오디오 소스 시작 */
     REG_DMA1CNT = 0;
     REG_SNDDSCNT |= SDS_ARESET;
 
@@ -95,9 +97,8 @@ void sound_play_sfx(u8 sfx_id) {
     case SFX_GAMEOVER:
         data = snd_gameover_data;
         len = SND_GAMEOVER_LEN;
-        /* BGM → 무음 전환 */
         bgm_on = 0;
-        dma1_to_silence();
+        stop_channel_a();
         break;
     case SFX_BOMB:
         data = snd_bomb_data;
@@ -111,7 +112,6 @@ void sound_play_sfx(u8 sfx_id) {
         return;
     }
 
-    /* DMA2 → FIFO B 리셋 → 오디오 소스 시작 */
     REG_DMA2CNT = 0;
     REG_SNDDSCNT |= SDS_BRESET;
 
@@ -138,20 +138,19 @@ void sound_update(void) {
         }
     }
 
-    /* SFX 끝나면 무음 DMA로 전환 (멈추지 않음) */
+    /* SFX 끝나면 채널 B 정지 */
     if (sfx_frames_left > 0) {
         sfx_frames_left--;
         if (sfx_frames_left == 0)
-            dma2_to_silence();
+            stop_channel_b();
     }
 }
 
 void sound_stop(void) {
     bgm_on = 0;
     sfx_frames_left = 0;
-    /* 양 채널 무음 DMA로 전환 */
-    dma1_to_silence();
-    dma2_to_silence();
+    stop_channel_a();
+    stop_channel_b();
 }
 
 #else
