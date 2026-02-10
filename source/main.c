@@ -139,13 +139,11 @@ int main(void) {
                 u8 next = gameover_update(kp);
                 if (next == STATE_TITLE) {
                     REG_BG2CNT = (REG_BG2CNT & ~BG_PRIO_MASK) | BG_PRIO(0);
-                    render_restore_face_tiles();
                     sound_stop();
                     gs.state = STATE_TITLE;
                     prev_state = 0xFF; /* 타이틀 재진입 트리거 */
                 } else if (next == STATE_PLAY) {
                     REG_BG2CNT = (REG_BG2CNT & ~BG_PRIO_MASK) | BG_PRIO(0);
-                    render_restore_face_tiles();
                     game_play_init(&gs);
                     prev_bg = 0xFF;
                     prev_state = STATE_PLAY;

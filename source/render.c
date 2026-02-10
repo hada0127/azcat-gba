@@ -23,12 +23,9 @@
 #include "spr_item_poison.h"
 #include "spr_item_speed.h"
 #include "spr_explosion.h"
-#include "spr_face_happy.h"
-#include "spr_face_normal.h"
-#include "spr_face_hurt.h"
-#include "spr_face_dead.h"
 #include "font_numbers.h"
-#include "spr_bomb_icon.h"
+#include "spr_hud_heart.h"
+#include "spr_hud_bomb.h"
 #include "grade_images.h"
 #include "nav_text.h"
 
@@ -68,12 +65,9 @@ void render_init(void) {
     memcpy32(&tile_mem[5][208], spr_item_poisonTiles,  spr_item_poisonTilesLen / 4);  /* 720: 16타일 */
     memcpy32(&tile_mem[5][224], spr_item_speedTiles,   spr_item_speedTilesLen / 4);   /* 736: 16타일 */
     memcpy32(&tile_mem[5][240], spr_explosionTiles,    spr_explosionTilesLen / 4);    /* 752: 16타일 */
-    memcpy32(&tile_mem[5][256], spr_face_happyTiles,   spr_face_happyTilesLen / 4);  /* 768: 32타일 32x64 */
-    memcpy32(&tile_mem[5][288], spr_face_normalTiles,  spr_face_normalTilesLen / 4);  /* 800: 32타일 */
-    memcpy32(&tile_mem[5][320], spr_face_hurtTiles,    spr_face_hurtTilesLen / 4);    /* 832: 32타일 */
-    memcpy32(&tile_mem[5][352], spr_face_deadTiles,    spr_face_deadTilesLen / 4);    /* 864: 32타일 */
     memcpy32(&tile_mem[5][384], font_numbersTiles,     font_numbersTilesLen / 4);     /* 896: 40타일 16x16 */
-    memcpy32(&tile_mem[5][424], spr_bomb_iconTiles,   spr_bomb_iconTilesLen / 4);    /* 936: 4타일 16x16 */
+    memcpy32(&tile_mem[5][424], spr_hud_heartTiles,   spr_hud_heartTilesLen / 4);    /* 936: 4타일 16x16 */
+    memcpy32(&tile_mem[5][428], spr_hud_bombTiles,    spr_hud_bombTilesLen / 4);     /* 940: 4타일 16x16 */
 
     /* OBJ 팔레트 로드 (walk0 팔레트 = 공유 팔레트) */
     memcpy16(pal_obj_bank[PB_PLAYER],      spr_player_walk0Pal, spr_player_walk0PalLen / 2);
@@ -85,12 +79,9 @@ void render_init(void) {
     memcpy16(pal_obj_bank[PB_ITEM_POISON], spr_item_poisonPal, spr_item_poisonPalLen / 2);
     memcpy16(pal_obj_bank[PB_ITEM_SPEED],  spr_item_speedPal,  spr_item_speedPalLen / 2);
     memcpy16(pal_obj_bank[PB_EXPLOSION],   spr_explosionPal,   spr_explosionPalLen / 2);
-    memcpy16(pal_obj_bank[PB_FACE_HAPPY],  spr_face_happyPal,  spr_face_happyPalLen / 2);
-    memcpy16(pal_obj_bank[PB_FACE_NORMAL], spr_face_normalPal, spr_face_normalPalLen / 2);
-    memcpy16(pal_obj_bank[PB_FACE_HURT],   spr_face_hurtPal,   spr_face_hurtPalLen / 2);
-    memcpy16(pal_obj_bank[PB_FACE_DEAD],   spr_face_deadPal,   spr_face_deadPalLen / 2);
     memcpy16(pal_obj_bank[PB_FONT],        font_numbersPal,    font_numbersPalLen / 2);
-    memcpy16(pal_obj_bank[PB_BOMB_ICON],   spr_bomb_iconPal,   spr_bomb_iconPalLen / 2);
+    memcpy16(pal_obj_bank[PB_HUD_HEART],   spr_hud_heartPal,   spr_hud_heartPalLen / 2);
+    memcpy16(pal_obj_bank[PB_HUD_BOMB],    spr_hud_bombPal,    spr_hud_bombPalLen / 2);
 }
 
 /* ── 배경 전환 (양쪽 페이지에 복사) ── */
@@ -255,51 +246,49 @@ static void render_digits(s16 value, int oam_start, int x, int y) {
     }
 }
 
-/* ── HUD용 얼굴 설정 (32x64 TALL) ── */
-static void render_face(u8 life) {
-    u8 face = hud_get_face_index(life);
-    u16 face_tid, face_pb;
-    switch (face) {
-    case FACE_HAPPY:  face_tid = TID_FACE_HAPPY;  face_pb = PB_FACE_HAPPY;  break;
-    case FACE_NORMAL: face_tid = TID_FACE_NORMAL; face_pb = PB_FACE_NORMAL; break;
-    case FACE_HURT:   face_tid = TID_FACE_HURT;   face_pb = PB_FACE_HURT;   break;
-    default:          face_tid = TID_FACE_DEAD;   face_pb = PB_FACE_DEAD;   break;
-    }
-    obj_set_attr(&obj_buffer[OAM_FACE],
-        ATTR0_TALL | ATTR0_4BPP,
-        ATTR1_SIZE_64,
-        ATTR2_PALBANK(face_pb) | ATTR2_ID(face_tid));
-    obj_set_pos(&obj_buffer[OAM_FACE], HUD_FACE_X, HUD_FACE_Y);
-}
-
 /* ── HUD 렌더링 (플레이 중) ── */
 void render_hud(const GameState* gs) {
-    /* 얼굴 아이콘 (32x64 TALL, 상단 좌측) */
-    render_face(gs->player.life);
+    int i;
+
+    /* 하트 아이콘 (16x16, 좌측 상단) */
+    for (i = 0; i < OAM_HEART_COUNT; i++) {
+        if (i < gs->player.life) {
+            obj_set_attr(&obj_buffer[OAM_HEART_START + i],
+                ATTR0_SQUARE | ATTR0_4BPP,
+                ATTR1_SIZE_16,
+                ATTR2_PALBANK(PB_HUD_HEART) | ATTR2_ID(TID_HUD_HEART));
+            obj_set_pos(&obj_buffer[OAM_HEART_START + i],
+                HUD_HEART_X + i * HUD_HEART_SPACE, HUD_HEART_Y);
+        } else {
+            obj_hide(&obj_buffer[OAM_HEART_START + i]);
+        }
+    }
 
     /* 점수 (중앙 상단, 16x16 테두리 폰트) */
     render_digits(gs->score, OAM_SCORE_START, HUD_SCORE_X, HUD_SCORE_Y);
 
-    /* 폭탄 보유 아이콘 (16x16, 얼굴 하단부 겹침) */
+    /* 폭탄 보유 아이콘 (16x16, 하트 아래줄) */
     if (gs->bomb.have) {
-        obj_set_attr(&obj_buffer[OAM_BOMB_ICON],
+        obj_set_attr(&obj_buffer[OAM_HUD_BOMB],
             ATTR0_SQUARE | ATTR0_4BPP,
             ATTR1_SIZE_16,
-            ATTR2_PALBANK(PB_BOMB_ICON) | ATTR2_ID(TID_BOMB_ICON));
-        obj_set_pos(&obj_buffer[OAM_BOMB_ICON], HUD_BOMB_X, HUD_BOMB_Y);
+            ATTR2_PALBANK(PB_HUD_BOMB) | ATTR2_ID(TID_HUD_BOMB));
+        obj_set_pos(&obj_buffer[OAM_HUD_BOMB], HUD_HBOMB_X, HUD_HBOMB_Y);
     } else {
-        obj_hide(&obj_buffer[OAM_BOMB_ICON]);
+        obj_hide(&obj_buffer[OAM_HUD_BOMB]);
     }
 }
 
 /* ── 타이틀 HUD (하이스코어 표시) ── */
 void render_title_hud(s16 hiscore) {
+    int i;
     /* 하이스코어 숫자를 화면 중앙 하단에 표시 */
     render_digits(hiscore, OAM_SCORE_START, (SCREEN_W - 40) / 2, SCREEN_H - 16);
 
     /* 나머지 HUD 슬롯 숨기기 */
-    obj_hide(&obj_buffer[OAM_FACE]);
-    obj_hide(&obj_buffer[OAM_BOMB_ICON]);
+    for (i = 0; i < OAM_HEART_COUNT; i++)
+        obj_hide(&obj_buffer[OAM_HEART_START + i]);
+    obj_hide(&obj_buffer[OAM_HUD_BOMB]);
 }
 
 /* ── 게임오버 UI: OAM 스프라이트 기반 (투명 배경, 스프라이트 위에 표시) ── */
@@ -369,14 +358,6 @@ void render_gameover_load_ui(u8 grade_index) {
         (u32*)&tile_mem[5][TID_GO_RETRY2 - 512], 16, 16);
 }
 
-/* 얼굴 타일 복원 (게임오버 → 플레이 전환 시) */
-void render_restore_face_tiles(void) {
-    memcpy32(&tile_mem[5][256], spr_face_happyTiles,  spr_face_happyTilesLen / 4);
-    memcpy32(&tile_mem[5][288], spr_face_normalTiles, spr_face_normalTilesLen / 4);
-    memcpy32(&tile_mem[5][320], spr_face_hurtTiles,   spr_face_hurtTilesLen / 4);
-    memcpy32(&tile_mem[5][352], spr_face_deadTiles,   spr_face_deadTilesLen / 4);
-}
-
 /* ── 게임오버 화면: UI를 OAM 스프라이트로 표시 ── */
 void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
     int i;
@@ -396,41 +377,45 @@ void render_gameover_screen(const GameState* gs, const GameOverResult* result) {
     for (i = 0; i < OAM_HIT_COUNT; i++)
         obj_buffer[OAM_HIT_START + i].attr2 = (obj_buffer[OAM_HIT_START + i].attr2 & ~ATTR2_PRIO_MASK) | ATTR2_PRIO(1);
 
-    /* 등급 (64x32 + 16x16) */
-    obj_set_attr(&obj_buffer[OAM_FACE],
+    /* 등급 (64x32 + 16x16, 하트 슬롯 재사용) */
+    obj_set_attr(&obj_buffer[OAM_HEART_START],
         ATTR0_WIDE | ATTR0_4BPP, ATTR1_SIZE_64,
         ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_GRADE1));
-    obj_set_pos(&obj_buffer[OAM_FACE], go_grade_x, GO_GRADE_Y);
+    obj_set_pos(&obj_buffer[OAM_HEART_START], go_grade_x, GO_GRADE_Y);
 
-    obj_set_attr(&obj_buffer[OAM_BOMB_ICON],
+    obj_set_attr(&obj_buffer[OAM_HEART_START + 1],
         ATTR0_SQUARE | ATTR0_4BPP, ATTR1_SIZE_16,
         ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_GRADE2));
-    obj_set_pos(&obj_buffer[OAM_BOMB_ICON], go_grade_x + 64, GO_GRADE_Y);
+    obj_set_pos(&obj_buffer[OAM_HEART_START + 1], go_grade_x + 64, GO_GRADE_Y);
+
+    /* 나머지 HUD 슬롯 숨김 */
+    obj_hide(&obj_buffer[OAM_HEART_START + 2]);
+    obj_hide(&obj_buffer[OAM_HUD_BOMB]);
 
     /* 점수 (기존 폰트 타일 사용) */
     render_digits(gs->score, OAM_SCORE_START, go_score_x, GO_SCORE_Y);
 
-    /* 타이틀 네비 (OAM 46~47, 게임플레이 스프라이트 위에 표시) */
-    obj_set_attr(&obj_buffer[46],
-        ATTR0_WIDE | ATTR0_4BPP, ATTR1_SIZE_64,
-        ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_TITLE1));
-    obj_set_pos(&obj_buffer[46], go_title_x, GO_NAV_Y);
-
-    obj_set_attr(&obj_buffer[47],
-        ATTR0_SQUARE | ATTR0_4BPP, ATTR1_SIZE_16,
-        ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_TITLE2));
-    obj_set_pos(&obj_buffer[47], go_title_x + 64, GO_NAV_Y);
-
-    /* 재도전 네비 (OAM 48~49) */
+    /* 타이틀 네비 (OAM 48~49) */
     obj_set_attr(&obj_buffer[48],
         ATTR0_WIDE | ATTR0_4BPP, ATTR1_SIZE_64,
-        ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_RETRY1));
-    obj_set_pos(&obj_buffer[48], go_retry_x, GO_NAV_Y);
+        ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_TITLE1));
+    obj_set_pos(&obj_buffer[48], go_title_x, GO_NAV_Y);
 
     obj_set_attr(&obj_buffer[49],
         ATTR0_SQUARE | ATTR0_4BPP, ATTR1_SIZE_16,
+        ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_TITLE2));
+    obj_set_pos(&obj_buffer[49], go_title_x + 64, GO_NAV_Y);
+
+    /* 재도전 네비 (OAM 50~51) */
+    obj_set_attr(&obj_buffer[50],
+        ATTR0_WIDE | ATTR0_4BPP, ATTR1_SIZE_64,
+        ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_RETRY1));
+    obj_set_pos(&obj_buffer[50], go_retry_x, GO_NAV_Y);
+
+    obj_set_attr(&obj_buffer[51],
+        ATTR0_SQUARE | ATTR0_4BPP, ATTR1_SIZE_16,
         ATTR2_PALBANK(PB_GO_UI) | ATTR2_ID(TID_GO_RETRY2));
-    obj_set_pos(&obj_buffer[49], go_retry_x + 64, GO_NAV_Y);
+    obj_set_pos(&obj_buffer[51], go_retry_x + 64, GO_NAV_Y);
 }
 
 /* ── 모든 스프라이트 숨기기 ── */

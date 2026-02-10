@@ -9,15 +9,16 @@
 
 /* ── OAM 슬롯 할당 (낮은 인덱스 = 앞에 표시) ── */
 /* 레이어: UI > 히트이펙트 > 아이템 > 고양이 > 플레이어 */
-#define OAM_BOMB_ICON   0   /* 폭탄 보유 표시 (최전면) */
-#define OAM_SCORE_START 1   /* 1-5: 5자리 점수 */
-#define OAM_FACE        6   /* 얼굴 (폭탄 아이콘보다 뒤) */
-#define OAM_HIT_START   7   /* 7-10: 충돌 이펙트 (최대 4개) */
+#define OAM_HEART_START 0   /* 0-2: HP 하트 아이콘 (최전면) */
+#define OAM_HEART_COUNT 3
+#define OAM_SCORE_START 3   /* 3-7: 5자리 점수 */
+#define OAM_HUD_BOMB    8   /* 폭탄 보유 표시 */
+#define OAM_HIT_START   9   /* 9-12: 충돌 이펙트 (최대 4개) */
 #define OAM_HIT_COUNT   4
-#define OAM_ITEM        11
-#define OAM_CAT_START   12  /* 12-44: 고양이 33마리 */
-#define OAM_PLAYER      45
-#define OAM_COUNT       46
+#define OAM_ITEM        13
+#define OAM_CAT_START   14  /* 14-46: 고양이 33마리 */
+#define OAM_PLAYER      47
+#define OAM_COUNT       48
 
 /* ── OBJ 타일 ID (Mode 4: 512부터) ── */
 /* 원본 스프라이트 사이즈: 스케일링 없이 OAM 캔버스에 패딩 */
@@ -33,12 +34,9 @@
 #define TID_ITEM_POISON 720  /* 16타일 32x32 */
 #define TID_ITEM_SPEED  736  /* 16타일 32x32 */
 #define TID_EXPLOSION   752  /* 16타일 32x32 (원본 29x26) */
-#define TID_FACE_HAPPY  768  /* 32타일 32x64 */
-#define TID_FACE_NORMAL 800  /* 32타일 32x64 */
-#define TID_FACE_HURT   832  /* 32타일 32x64 */
-#define TID_FACE_DEAD   864  /* 32타일 32x64 */
 #define TID_FONT        896  /* 0~9 숫자 (4타일x10=40타일, 16x16) */
-#define TID_BOMB_ICON   936  /* 4타일 16x16 (원본 18x24 축소) */
+#define TID_HUD_HEART   936  /* 4타일 16x16 (하트 HUD) */
+#define TID_HUD_BOMB    940  /* 4타일 16x16 (폭탄 HUD) */
 
 /* ── OBJ 팔레트 뱅크 ── */
 #define PB_PLAYER       0
@@ -50,12 +48,9 @@
 #define PB_ITEM_POISON  6
 #define PB_ITEM_SPEED   7
 #define PB_EXPLOSION    8
-#define PB_FACE_HAPPY   9
-#define PB_FACE_NORMAL  10
-#define PB_FACE_HURT    11
-#define PB_FACE_DEAD    12
+#define PB_HUD_HEART    9
+#define PB_HUD_BOMB     10
 #define PB_FONT         13
-#define PB_BOMB_ICON    15
 
 /* 배경 타입 상수 (title 추가) */
 #define BG_TITLE_SCREEN 0xFF
@@ -79,10 +74,11 @@
 #define AFFINE_IDX_FLIP 1    /* 좌우반전 affine (HFLIP 대체) */
 
 /* HUD 좌표 */
-#define HUD_FACE_X      207  /* 240-32-1 = 오른쪽 1px 여백 */
-#define HUD_FACE_Y      1    /* 위쪽 1px 여백 */
-#define HUD_BOMB_X      207  /* 얼굴 왼쪽 맞춤 */
-#define HUD_BOMB_Y      18   /* 얼굴 가시 영역 왼쪽 하단 겹침 */
+#define HUD_HEART_X      2   /* 하트 시작 X (좌측 2px 여백) */
+#define HUD_HEART_Y      2   /* 하트 Y (상단 2px 여백) */
+#define HUD_HEART_SPACE  17  /* 하트 간격 (16+1) */
+#define HUD_HBOMB_X      2   /* 폭탄 아이콘 X */
+#define HUD_HBOMB_Y      19  /* 하트 아래줄 (2+16+1) */
 #define HUD_SCORE_X     88  /* 중앙 (240-5*12-4)/2 */
 #define HUD_SCORE_Y     0   /* 상단 */
 #define HUD_DIGIT_SPACE 12  /* 16x16 숫자 간격 */
@@ -96,7 +92,6 @@ void render_hud(const GameState* gs);
 void render_title_hud(s16 hiscore);
 void render_gameover_screen(const GameState* gs, const GameOverResult* result);
 void render_gameover_load_ui(u8 grade_index);
-void render_restore_face_tiles(void);
 void render_hide_all(void);
 void render_oam_update(void);
 
