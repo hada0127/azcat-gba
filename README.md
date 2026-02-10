@@ -1,10 +1,12 @@
 # azcat-gba
 
-**Ah! Cat's manga daioh!** (아! 고양이를 피해라 대왕) — a Game Boy Advance avoidance game inspired by **Azumanga Daioh**.
+**Ah! Cat's manga daioh!** (아! 고양이를 피해라 대왕) — a Game Boy Advance port of a 2003 GP32 game.
 
 ## About
 
-Dodge cats raining from the sky in an increasingly frantic avoidance game. Built from scratch in C for the **Game Boy Advance** using devkitARM and libtonc.
+Back in 2003, this game was originally made for the **GP32** handheld as a fan game inspired by **Azumanga Daioh** (아즈망가 대왕). Players dodge cats raining from the sky in an increasingly frantic avoidance game.
+
+In 2026, it has been rebuilt from scratch in C for the **Game Boy Advance**, faithfully recreating the original gameplay on real GBA hardware using devkitARM and libtonc.
 
 ## How to Play
 
@@ -80,7 +82,8 @@ Use any GBA emulator (e.g., [mGBA](https://mgba.io/)) or flash to a GBA cartridg
 
 ## Credits
 
-- hada0127(taRu)
+- **Original Game** (2003, GP32): hada0127(taRu)
+- **GBA Port** (2026): hada0127(taRu)
 
 ## License
 
