@@ -27,6 +27,7 @@
 #include "spr_hud_heart.h"
 #include "spr_hud_bomb.h"
 #include "spr_highscore_text.h"
+#include "font_numbers_small.h"
 #include "grade_images.h"
 #include "nav_text.h"
 
@@ -70,6 +71,7 @@ void render_init(void) {
     memcpy32(&tile_mem[5][424], spr_hud_heartTiles,   spr_hud_heartTilesLen / 4);    /* 936: 4타일 16x16 */
     memcpy32(&tile_mem[5][428], spr_hud_bombTiles,    spr_hud_bombTilesLen / 4);     /* 940: 4타일 16x16 */
     memcpy32(&tile_mem[5][432], spr_highscore_textTiles, spr_highscore_textTilesLen / 4); /* 944: 32타일 64x32 */
+    memcpy32(&tile_mem[5][464], font_numbers_smallTiles, font_numbers_smallTilesLen / 4); /* 976: 10타일 8x8 */
 
     /* OBJ 팔레트 로드 (walk0 팔레트 = 공유 팔레트) */
     memcpy16(pal_obj_bank[PB_PLAYER],      spr_player_walk0Pal, spr_player_walk0PalLen / 2);
@@ -85,6 +87,7 @@ void render_init(void) {
     memcpy16(pal_obj_bank[PB_HUD_HEART],   spr_hud_heartPal,   spr_hud_heartPalLen / 2);
     memcpy16(pal_obj_bank[PB_HUD_BOMB],    spr_hud_bombPal,    spr_hud_bombPalLen / 2);
     memcpy16(pal_obj_bank[PB_HISCORE_TXT], spr_highscore_textPal, spr_highscore_textPalLen / 2);
+    memcpy16(pal_obj_bank[PB_FONT_SMALL], font_numbers_smallPal, font_numbers_smallPalLen / 2);
 }
 
 /* ── 배경 전환 (양쪽 페이지에 복사) ── */
@@ -249,6 +252,21 @@ static void render_digits(s16 value, int oam_start, int x, int y) {
     }
 }
 
+/* ── 숫자 5자리를 OAM으로 표시 (8x8 작은 폰트) ── */
+static void render_digits_small(s16 value, int oam_start, int x, int y) {
+    char buf[6];
+    int i;
+    hud_format_score(value, buf);
+    for (i = 0; i < 5; i++) {
+        int digit = buf[i] - '0';
+        obj_set_attr(&obj_buffer[oam_start + i],
+            ATTR0_SQUARE | ATTR0_4BPP,
+            ATTR1_SIZE_8,
+            ATTR2_PALBANK(PB_FONT_SMALL) | ATTR2_ID(TID_FONT_SMALL + digit));
+        obj_set_pos(&obj_buffer[oam_start + i], x + i * TITLE_DIGIT_SPACE, y);
+    }
+}
+
 /* ── HUD 렌더링 (플레이 중) ── */
 void render_hud(const GameState* gs) {
     int i;
@@ -293,8 +311,8 @@ void render_title_hud(s16 hiscore) {
         ATTR2_PALBANK(PB_HISCORE_TXT) | ATTR2_ID(TID_HISCORE_TXT));
     obj_set_pos(&obj_buffer[OAM_HEART_START], TITLE_HS_TEXT_X, TITLE_HS_TEXT_Y);
 
-    /* 하이스코어 숫자 (텍스트 아래, 좌측 정렬) */
-    render_digits(hiscore, OAM_SCORE_START, TITLE_HS_NUM_X, TITLE_HS_NUM_Y);
+    /* 하이스코어 숫자 (8x8 작은 폰트, 텍스트 옆) */
+    render_digits_small(hiscore, OAM_SCORE_START, TITLE_HS_NUM_X, TITLE_HS_NUM_Y);
 
     /* 사용하지 않는 HUD 슬롯 숨기기 */
     for (i = 1; i < OAM_HEART_COUNT; i++)
