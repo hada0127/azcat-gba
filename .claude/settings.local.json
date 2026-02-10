@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mingw32-make:*)",
+      "Bash(\"C:/Users/taro1/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/mingw32-make.exe\" -f Makefile.test)",
+      "Bash(export PATH:*)",
+      "Bash(powershell -Command \"cd C:\\\\Users\\\\taro1\\\\Downloads\\\\azcat; $env:PATH = ''C:\\\\Users\\\\taro1\\\\AppData\\\\Local\\\\Microsoft\\\\WinGet\\\\Packages\\\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\\\mingw64\\\\bin;'' + $env:PATH; mingw32-make -f Makefile.test 2>&1\")",
+      "Bash(powershell.exe -NoProfile -Command '$env:PATH = \"\"C:\\\\Users\\\\taro1\\\\AppData\\\\Local\\\\Microsoft\\\\WinGet\\\\Packages\\\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\\\mingw64\\\\bin;\"\" + $env:PATH; cd C:\\\\Users\\\\taro1\\\\Downloads\\\\azcat; mingw32-make -f Makefile.test 2>&1')",
+      "Bash(/c/devkitPro/msys2/usr/bin/bash -c 'export DEVKITPRO=/opt/devkitpro && export DEVKITARM=/opt/devkitpro/devkitARM && export PATH=\"\"/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:/opt/devkitpro/msys2/usr/bin:$PATH\"\" && export TEMP=/tmp && export TMP=/tmp && make 2>&1')",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\n폭탄 사용 키 L → R 버튼으로 변경\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)"
+    ]
+  }
+}
