@@ -2,6 +2,7 @@
 
 #ifdef PLATFORM_GBA
 
+#include <string.h>
 #include <tonc.h>
 #include "snd_bgm.h"
 #include "snd_hit.h"
@@ -9,54 +10,35 @@
 #include "snd_item.h"
 #include "snd_gameover.h"
 
-/* 8192Hz 타이머 값: 65536 - (16777216/8192) = 63488 = 0xF800 */
-#define TIMER_8192HZ    0xF800
+/* 8192Hz 타이머 값 */
+#define TIMER_8192HZ  0xF800
 
-/* BGM 총 프레임 수 */
-#define BGM_TOTAL_FRAMES  (SND_BGM_LEN * 60 / 8192)
+/*
+ * 버퍼 크기: 8192/60 ≈ 137 샘플/프레임
+ * 16의 배수 + 여유분 = 176
+ */
+#define BUF_SIZE  176
 
-/* SFX 프레임 계산: 오버런 방지 위해 +1 없음 */
-#define SFX_FRAMES(len)   ((len) * 60 / 8192)
+/* 더블 버퍼 (DMA가 읽는 대상, RAM) */
+static s8 buf_a[2][BUF_SIZE] ALIGN(4);  /* BGM 채널 */
+static s8 buf_b[2][BUF_SIZE] ALIGN(4);  /* SFX 채널 */
+static u8 cur_buf;
 
-/* 상태 */
+/* BGM 상태 */
+static const s8 *bgm_src;
+static u32 bgm_pos;
+static u32 bgm_len;
 static u8  bgm_on;
-static u32 bgm_frames;
-static u16 sfx_frames_left;
 
-/* 채널 A 정지: DMA 멈추고 FIFO에 0 채우기 */
-static void stop_channel_a(void) {
-    REG_DMA1CNT = 0;
-    REG_SNDDSCNT |= SDS_ARESET;
-    /* FIFO에 무음 주입 (8 words = FIFO 전체) */
-    REG_FIFO_A = 0;
-    REG_FIFO_A = 0;
-    REG_FIFO_A = 0;
-    REG_FIFO_A = 0;
-    REG_FIFO_A = 0;
-    REG_FIFO_A = 0;
-    REG_FIFO_A = 0;
-    REG_FIFO_A = 0;
-}
-
-/* 채널 B 정지: DMA 멈추고 FIFO에 0 채우기 */
-static void stop_channel_b(void) {
-    REG_DMA2CNT = 0;
-    REG_SNDDSCNT |= SDS_BRESET;
-    REG_FIFO_B = 0;
-    REG_FIFO_B = 0;
-    REG_FIFO_B = 0;
-    REG_FIFO_B = 0;
-    REG_FIFO_B = 0;
-    REG_FIFO_B = 0;
-    REG_FIFO_B = 0;
-    REG_FIFO_B = 0;
-}
+/* SFX 상태 */
+static const s8 *sfx_src;
+static u32 sfx_pos;
+static u32 sfx_len;
 
 void sound_init(void) {
-    /* 마스터 사운드 활성화 */
     REG_SNDSTAT = SSTAT_ENABLE;
 
-    /* Direct Sound A+B: DMG 볼륨 0(PSG 차단), DS 100%, 양쪽 스피커, 타이머 0 */
+    /* Direct Sound A+B: 100% 볼륨, 양쪽 스피커, 타이머 0 */
     REG_SNDDSCNT = SDS_A100 | SDS_B100
                  | SDS_AL | SDS_AR | SDS_BL | SDS_BR
                  | SDS_ATMR0 | SDS_BTMR0;
@@ -65,92 +47,115 @@ void sound_init(void) {
     REG_TM0D = TIMER_8192HZ;
     REG_TM0CNT = TM_ENABLE | TM_FREQ_SYS;
 
-    bgm_on = 0;
-    bgm_frames = 0;
-    sfx_frames_left = 0;
-}
+    /* 버퍼 무음 초기화 */
+    memset(buf_a, 0, sizeof(buf_a));
+    memset(buf_b, 0, sizeof(buf_b));
+    cur_buf = 0;
 
-void sound_play_bgm(u8 track) {
-    (void)track;
-
-    REG_DMA1CNT = 0;
-    REG_SNDDSCNT |= SDS_ARESET;
-
-    REG_DMA1SAD = (u32)snd_bgm_data;
+    /* DMA 시작 (무음 버퍼) */
+    REG_DMA1SAD = (u32)buf_a[0];
     REG_DMA1DAD = (u32)&REG_FIFO_A;
     REG_DMA1CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
                 | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
 
-    bgm_frames = 0;
-    bgm_on = 1;
-}
-
-void sound_play_sfx(u8 sfx_id) {
-    const void *data = NULL;
-    u32 len = 0;
-
-    switch (sfx_id) {
-    case SFX_HIT:
-        data = snd_hit_data;
-        len = SND_HIT_LEN;
-        break;
-    case SFX_GAMEOVER:
-        data = snd_gameover_data;
-        len = SND_GAMEOVER_LEN;
-        bgm_on = 0;
-        stop_channel_a();
-        break;
-    case SFX_BOMB:
-        data = snd_bomb_data;
-        len = SND_BOMB_LEN;
-        break;
-    case SFX_ITEM:
-        data = snd_item_data;
-        len = SND_ITEM_LEN;
-        break;
-    default:
-        return;
-    }
-
-    REG_DMA2CNT = 0;
-    REG_SNDDSCNT |= SDS_BRESET;
-
-    REG_DMA2SAD = (u32)data;
+    REG_DMA2SAD = (u32)buf_b[0];
     REG_DMA2DAD = (u32)&REG_FIFO_B;
     REG_DMA2CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
                 | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
 
-    sfx_frames_left = SFX_FRAMES(len);
+    bgm_on = 0;
+    bgm_pos = 0;
+    bgm_len = 0;
+    sfx_len = 0;
+    sfx_pos = 0;
+}
+
+void sound_play_bgm(u8 track) {
+    (void)track;
+    bgm_src = (const s8 *)snd_bgm_data;
+    bgm_len = SND_BGM_LEN;
+    bgm_pos = 0;
+    bgm_on = 1;
+}
+
+void sound_play_sfx(u8 sfx_id) {
+    switch (sfx_id) {
+    case SFX_HIT:
+        sfx_src = (const s8 *)snd_hit_data;
+        sfx_len = SND_HIT_LEN;
+        break;
+    case SFX_GAMEOVER:
+        sfx_src = (const s8 *)snd_gameover_data;
+        sfx_len = SND_GAMEOVER_LEN;
+        bgm_on = 0;
+        break;
+    case SFX_BOMB:
+        sfx_src = (const s8 *)snd_bomb_data;
+        sfx_len = SND_BOMB_LEN;
+        break;
+    case SFX_ITEM:
+        sfx_src = (const s8 *)snd_item_data;
+        sfx_len = SND_ITEM_LEN;
+        break;
+    default:
+        return;
+    }
+    sfx_pos = 0;
 }
 
 void sound_update(void) {
-    /* BGM 루프 */
+    u8 next = cur_buf ^ 1;
+
+    /* ── BGM 버퍼 채우기 ── */
     if (bgm_on) {
-        bgm_frames++;
-        if (bgm_frames >= BGM_TOTAL_FRAMES) {
-            REG_DMA1CNT = 0;
-            REG_SNDDSCNT |= SDS_ARESET;
-            REG_DMA1SAD = (u32)snd_bgm_data;
-            REG_DMA1DAD = (u32)&REG_FIFO_A;
-            REG_DMA1CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
-                        | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
-            bgm_frames = 0;
+        u32 left = bgm_len - bgm_pos;
+        if (left >= BUF_SIZE) {
+            memcpy(buf_a[next], bgm_src + bgm_pos, BUF_SIZE);
+            bgm_pos += BUF_SIZE;
+        } else {
+            /* 루프: 나머지 복사 + 처음부터 이어 채우기 */
+            memcpy(buf_a[next], bgm_src + bgm_pos, left);
+            memcpy(buf_a[next] + left, bgm_src, BUF_SIZE - left);
+            bgm_pos = BUF_SIZE - left;
         }
+    } else {
+        memset(buf_a[next], 0, BUF_SIZE);
     }
 
-    /* SFX 끝나면 채널 B 정지 */
-    if (sfx_frames_left > 0) {
-        sfx_frames_left--;
-        if (sfx_frames_left == 0)
-            stop_channel_b();
+    /* ── SFX 버퍼 채우기 ── */
+    if (sfx_len > 0) {
+        u32 left = sfx_len - sfx_pos;
+        u32 n = (left < BUF_SIZE) ? left : BUF_SIZE;
+        memcpy(buf_b[next], sfx_src + sfx_pos, n);
+        if (n < BUF_SIZE)
+            memset(buf_b[next] + n, 0, BUF_SIZE - n);
+        sfx_pos += n;
+        if (sfx_pos >= sfx_len)
+            sfx_len = 0;
+    } else {
+        memset(buf_b[next], 0, BUF_SIZE);
     }
+
+    /* ── DMA 스왑 ── */
+    REG_DMA1CNT = 0;
+    REG_DMA1SAD = (u32)buf_a[next];
+    REG_DMA1DAD = (u32)&REG_FIFO_A;
+    REG_DMA1CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
+                | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
+
+    REG_DMA2CNT = 0;
+    REG_DMA2SAD = (u32)buf_b[next];
+    REG_DMA2DAD = (u32)&REG_FIFO_B;
+    REG_DMA2CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
+                | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
+
+    cur_buf = next;
 }
 
 void sound_stop(void) {
     bgm_on = 0;
-    sfx_frames_left = 0;
-    stop_channel_a();
-    stop_channel_b();
+    sfx_len = 0;
+    /* 다음 sound_update()에서 양 채널 버퍼가 0으로 채워짐 */
 }
 
 #else
