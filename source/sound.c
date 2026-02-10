@@ -71,6 +71,7 @@ void sound_play_sfx(u8 sfx_id) {
         len = SND_GAMEOVER_LEN;
         bgm_on = 0;        /* BGM 정지 */
         REG_DMA1CNT = 0;
+        REG_SNDDSCNT |= SDS_ARESET;
         break;
     case SFX_BOMB:
         data = snd_bomb_data;
@@ -111,11 +112,13 @@ void sound_update(void) {
         }
     }
 
-    /* SFX 타이머: 끝나면 DMA 정지 */
+    /* SFX 타이머: 끝나면 DMA 정지 + FIFO 리셋 */
     if (sfx_frames_left > 0) {
         sfx_frames_left--;
-        if (sfx_frames_left == 0)
+        if (sfx_frames_left == 0) {
             REG_DMA2CNT = 0;
+            REG_SNDDSCNT |= SDS_BRESET;
+        }
     }
 }
 
@@ -124,6 +127,7 @@ void sound_stop(void) {
     sfx_frames_left = 0;
     REG_DMA1CNT = 0;
     REG_DMA2CNT = 0;
+    REG_SNDDSCNT |= SDS_ARESET | SDS_BRESET;
 }
 
 #else
