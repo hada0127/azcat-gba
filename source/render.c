@@ -30,6 +30,7 @@
 #include "font_numbers_small.h"
 #include "grade_images.h"
 #include "nav_text.h"
+#include "pause_text.h"
 
 /* OAM 섀도우 버퍼 */
 static OBJ_ATTR obj_buffer[128];
@@ -100,6 +101,9 @@ void render_init(void) {
     memcpy16(pal_obj_bank[PB_HUD_BOMB],    spr_hud_bombPal,    spr_hud_bombPalLen / 2);
     memcpy16(pal_obj_bank[PB_HISCORE_TXT], spr_highscore_textPal, spr_highscore_textPalLen / 2);
     memcpy16(pal_obj_bank[PB_FONT_SMALL], font_numbers_smallPal, font_numbers_smallPalLen / 2);
+
+    /* PAUSE 텍스트 초기화 */
+    render_pause_init();
 }
 
 /* ── 배경 전환 (양쪽 페이지에 복사) ── */
@@ -477,6 +481,29 @@ void render_hide_all(void) {
 /* ── OAM 섀도우 → 하드웨어 복사 ── */
 void render_oam_update(void) {
     oam_copy(oam_mem, obj_buffer, 128);
+}
+
+/* ── PAUSE 텍스트 ── */
+void render_pause_init(void) {
+    /* 팔레트 뱅크 15: 0=투명, 1=흰색, 2=검정 */
+    pal_obj_bank[PB_PAUSE][1] = 0x7FFF;
+    pal_obj_bank[PB_PAUSE][2] = 0x0000;
+
+    /* 비트맵 → 4bpp 타일 변환 후 VRAM 로드 */
+    bitmap_to_obj_tiles(pause_text_data, PAUSE_TEXT_W, PAUSE_TEXT_H, 0, 0,
+        (u32*)&tile_mem[5][TID_PAUSE - 512], 64, 32);
+}
+
+void render_pause_show(void) {
+    obj_set_attr(&obj_buffer[OAM_PAUSE],
+        ATTR0_WIDE | ATTR0_4BPP,
+        ATTR1_SIZE_64,
+        ATTR2_PALBANK(PB_PAUSE) | ATTR2_ID(TID_PAUSE));
+    obj_set_pos(&obj_buffer[OAM_PAUSE], 88, 64);
+}
+
+void render_pause_hide(void) {
+    obj_hide(&obj_buffer[OAM_PAUSE]);
 }
 
 #endif /* PLATFORM_GBA */

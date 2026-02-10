@@ -35,6 +35,7 @@ int main(void) {
     u8 prev_state = 0xFF;
     u8 go_input_delay = 0;  /* 게임오버 입력 딜레이 */
     u8 prev_bomb = 0;       /* 폭탄 BG 전환 추적 */
+    u8 paused = 0;          /* 일시정지 플래그 */
 
     /* 타이틀 배경 세팅 */
     render_set_title_bg();
@@ -76,52 +77,63 @@ int main(void) {
 
         /* ── 플레이 ── */
         case STATE_PLAY: {
-            u8 prev_life = gs.player.life;
-            u8 prev_bomb_timer = gs.bomb.timer;
-
-            u8 collected = game_play_update(&gs, kd, kp);
-
-            /* 피격 효과음 */
-            if (gs.player.life < prev_life && gs.state == STATE_PLAY)
-                sound_play_sfx(SFX_HIT);
-            /* 폭탄 사용 효과음 */
-            if (gs.bomb.timer > 0 && prev_bomb_timer == 0)
-                sound_play_sfx(SFX_BOMB);
-            /* 아이템 획득 효과음 (반환값 > 0 = 실제 획득) */
-            if (collected > 0)
-                sound_play_sfx(SFX_ITEM);
-
-            /* 배경 전환 감지 */
-            if (gs.bg_type != prev_bg && !bomb_is_active(&gs.bomb)) {
-                render_set_bg(gs.bg_type);
-                prev_bg = gs.bg_type;
+            /* Start 키로 일시정지 토글 */
+            if (kp & KEY_START) {
+                paused ^= 1;
+                if (paused) render_pause_show();
+                else render_pause_hide();
             }
 
-            /* 폭탄 전체화면 이펙트 */
-            {
-                u8 bomb_now = bomb_is_active(&gs.bomb) ? 1 : 0;
-                if (bomb_now && !prev_bomb) {
-                    render_set_bomb_bg();
-                } else if (!bomb_now && prev_bomb) {
+            if (!paused) {
+                u8 prev_life = gs.player.life;
+                u8 prev_bomb_timer = gs.bomb.timer;
+
+                u8 collected = game_play_update(&gs, kd, kp);
+
+                /* 피격 효과음 */
+                if (gs.player.life < prev_life && gs.state == STATE_PLAY)
+                    sound_play_sfx(SFX_HIT);
+                /* 폭탄 사용 효과음 */
+                if (gs.bomb.timer > 0 && prev_bomb_timer == 0)
+                    sound_play_sfx(SFX_BOMB);
+                /* 아이템 획득 효과음 (반환값 > 0 = 실제 획득) */
+                if (collected > 0)
+                    sound_play_sfx(SFX_ITEM);
+
+                /* 배경 전환 감지 */
+                if (gs.bg_type != prev_bg && !bomb_is_active(&gs.bomb)) {
                     render_set_bg(gs.bg_type);
+                    prev_bg = gs.bg_type;
                 }
-                prev_bomb = bomb_now;
-            }
 
-            /* 게임오버 진입 감지 */
-            if (gs.state == STATE_GAMEOVER) {
-                gameover_init(&go_result, gs.score, gs.hiscore);
-                if (go_result.new_hiscore) {
-                    save_prepare(&save, gs.hiscore);
-                    save_write(&save);
+                /* 폭탄 전체화면 이펙트 */
+                {
+                    u8 bomb_now = bomb_is_active(&gs.bomb) ? 1 : 0;
+                    if (bomb_now && !prev_bomb) {
+                        render_set_bomb_bg();
+                    } else if (!bomb_now && prev_bomb) {
+                        render_set_bg(gs.bg_type);
+                    }
+                    prev_bomb = bomb_now;
                 }
-                prev_state = STATE_GAMEOVER;
-                go_input_delay = 30; /* 0.5초 입력 무시 */
-                sound_play_sfx(SFX_GAMEOVER);
-                render_sprites(&gs); /* 사망 상태 스프라이트 유지 */
-                render_gameover_load_ui(go_result.grade_index);
-                render_gameover_screen(&gs, &go_result);
-                break;
+
+                /* 게임오버 진입 감지 */
+                if (gs.state == STATE_GAMEOVER) {
+                    paused = 0;
+                    render_pause_hide();
+                    gameover_init(&go_result, gs.score, gs.hiscore);
+                    if (go_result.new_hiscore) {
+                        save_prepare(&save, gs.hiscore);
+                        save_write(&save);
+                    }
+                    prev_state = STATE_GAMEOVER;
+                    go_input_delay = 30; /* 0.5초 입력 무시 */
+                    sound_play_sfx(SFX_GAMEOVER);
+                    render_sprites(&gs); /* 사망 상태 스프라이트 유지 */
+                    render_gameover_load_ui(go_result.grade_index);
+                    render_gameover_screen(&gs, &go_result);
+                    break;
+                }
             }
 
             render_sprites(&gs);
@@ -143,6 +155,7 @@ int main(void) {
                     sound_stop();
                     gs.state = STATE_TITLE;
                     prev_state = 0xFF; /* 타이틀 재진입 트리거 */
+                    paused = 0;
                 } else if (next == STATE_PLAY) {
                     REG_BG2CNT = (REG_BG2CNT & ~BG_PRIO_MASK) | BG_PRIO(0);
                     game_play_init(&gs);
@@ -150,6 +163,7 @@ int main(void) {
                     prev_state = STATE_PLAY;
                     render_hide_all();
                     sound_play_bgm(0);
+                    paused = 0;
                 }
             }
             break;

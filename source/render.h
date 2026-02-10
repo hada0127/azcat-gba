@@ -18,6 +18,7 @@
 #define OAM_ITEM        13
 #define OAM_CAT_START   14  /* 14-46: 고양이 33마리 */
 #define OAM_PLAYER      47
+#define OAM_PAUSE       52  /* PAUSE 텍스트 */
 #define OAM_COUNT       48
 
 /* ── OBJ 타일 ID (Mode 4: 512부터) ── */
@@ -39,6 +40,7 @@
 #define TID_HUD_BOMB    940  /* 4타일 16x16 (폭탄 HUD) */
 #define TID_HISCORE_TXT 944  /* 32타일 64x32 (High Score 텍스트) */
 #define TID_FONT_SMALL  976  /* 10타일 8x8 (작은 숫자 0~9) */
+#define TID_PAUSE       988  /* 32타일 64x32 (PAUSE 텍스트) */
 
 /* ── OBJ 팔레트 뱅크 ── */
 #define PB_PLAYER       0
@@ -55,6 +57,7 @@
 #define PB_HISCORE_TXT  11
 #define PB_FONT_SMALL   12
 #define PB_FONT         13
+#define PB_PAUSE        15  /* PAUSE 텍스트: 0=투명, 1=흰색, 2=검정 */
 
 /* 배경 타입 상수 (title 추가) */
 #define BG_TITLE_SCREEN 0xFF
@@ -107,6 +110,9 @@ void render_gameover_screen(const GameState* gs, const GameOverResult* result);
 void render_gameover_load_ui(u8 grade_index);
 void render_hide_all(void);
 void render_oam_update(void);
+void render_pause_init(void);
+void render_pause_show(void);
+void render_pause_hide(void);
 
 #endif /* PLATFORM_GBA */
 #endif /* RENDER_H */
