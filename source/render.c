@@ -53,7 +53,7 @@ void render_init(void) {
 
         /* EXIT 확대 애니메이션 affine (4단계: 384→320 점진적 확대) */
         {
-            static const s16 exit_scales[] = {372, 356, 340, 320};
+            static const s16 exit_scales[] = {348, 316, 284, 256};
             int j;
             for (j = 0; j < AFFINE_EXIT_STEPS; j++) {
                 oa[AFFINE_IDX_EXIT_BASE + j].pa = exit_scales[j];
