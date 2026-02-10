@@ -37,7 +37,7 @@ Four types of items fall from the sky during gameplay:
 
 ### Lives & HUD
 
-You start with 3 lives. The character portrait in the top-right corner reflects your current health. The score is displayed at the top of the screen, along with a bomb icon when one is held.
+You start with 3 lives, shown as hearts at the top-left corner. The score is displayed at the top of the screen, along with a bomb icon when one is held.
 
 ### Difficulty Progression
 
