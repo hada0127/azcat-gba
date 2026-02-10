@@ -12,9 +12,10 @@
 typedef struct {
     s32 x;
     s32 y;
-    s32 v_accel;    /* 개별 낙하 가속도 */
-    u8  state;      /* INACTIVE / FALLING / SIT */
-    u8  exit_anim;  /* EXIT 확대 애니메이션 카운터 */
+    s32 v_accel;        /* 개별 낙하 가속도 */
+    u8  state;          /* INACTIVE / FALLING / SIT */
+    u8  exit_anim;      /* EXIT 확대 애니메이션 카운터 */
+    u16 spawn_cooldown; /* 폭탄 후 재생성 대기 프레임 */
 } Cat;
 
 void cats_init(Cat cats[]);

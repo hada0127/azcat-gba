@@ -11,6 +11,7 @@ void cats_init(Cat cats[]) {
         cats[i].v_accel = 0;
         cats[i].state = CAT_STATE_INACTIVE;
         cats[i].exit_anim = 0;
+        cats[i].spawn_cooldown = 0;
     }
 }
 
@@ -30,22 +31,32 @@ u8 cats_update(Cat cats[], u16 score, s32 player_x,
 
     *score_add = 0;
 
-    /* 폭탄 활성 → 전체 제거 (낙하 + 히트 이펙트 포함) */
+    /* 폭탄 활성 → 전체 제거 + 시차 재생성 쿨다운 부여 */
     if (bomb_active) {
+        u8 stagger = 0;
         for (i = 0; i < MAX_CATS; i++) {
             if (cats[i].state == CAT_STATE_FALLING ||
                 cats[i].state == CAT_STATE_HIT) {
                 cats[i].state = CAT_STATE_INACTIVE;
                 cats[i].y = FP(200);
+                cats[i].spawn_cooldown = CAT_BOMB_RESPAWN_INTERVAL * (stagger + 1);
+                stagger++;
             }
+            /* 이미 INACTIVE인 고양이도 쿨다운 소모 */
+            if (cats[i].state == CAT_STATE_INACTIVE && cats[i].spawn_cooldown > 0)
+                cats[i].spawn_cooldown--;
         }
         return 0;
     }
 
     for (i = 0; i < MAX_CATS; i++) {
-        /* 활성화: 비활성 고양이를 cat_qty까지 스폰 */
+        /* 활성화: 비활성 고양이를 cat_qty까지 스폰 (쿨다운 대기) */
         if (cats[i].state == CAT_STATE_INACTIVE && (u8)i < cat_qty) {
-            cat_spawn(&cats[i]);
+            if (cats[i].spawn_cooldown > 0) {
+                cats[i].spawn_cooldown--;
+            } else {
+                cat_spawn(&cats[i]);
+            }
         }
 
         if (cats[i].state == CAT_STATE_FALLING) {
