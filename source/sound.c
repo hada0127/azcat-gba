@@ -18,23 +18,36 @@
 /* SFX 프레임 계산 매크로 */
 #define SFX_FRAMES(len)   ((len) * 60 / 8192 + 1)
 
+/* 채널 스피커 비트 */
+#define DSA_OUTPUT  (SDS_AL | SDS_AR)
+#define DSB_OUTPUT  (SDS_BL | SDS_BR)
+
 /* 상태 */
 static u8  bgm_on;
 static u32 bgm_frames;
 static u16 sfx_frames_left;
 
+/* 타이머 시작/정지 헬퍼 */
+static void timer_ensure_on(void) {
+    REG_TM0CNT = TM_ENABLE | TM_FREQ_SYS;
+}
+
+static void timer_stop_if_idle(void) {
+    if (!bgm_on && sfx_frames_left == 0)
+        REG_TM0CNT = 0;
+}
+
 void sound_init(void) {
     /* 마스터 사운드 활성화 */
     REG_SNDSTAT = SSTAT_ENABLE;
 
-    /* Direct Sound A+B: 100% 볼륨, 양쪽 스피커, 타이머 0 */
+    /* Direct Sound A+B: 100% 볼륨, 스피커 꺼둠, 타이머 0 */
     REG_SNDDSCNT = SDS_DMG100 | SDS_A100 | SDS_B100
-                 | SDS_AL | SDS_AR | SDS_BL | SDS_BR
                  | SDS_ATMR0 | SDS_BTMR0;
 
-    /* 타이머 0: 8192Hz */
+    /* 타이머 0: 8192Hz (초기엔 꺼둠) */
     REG_TM0D = TIMER_8192HZ;
-    REG_TM0CNT = TM_ENABLE | TM_FREQ_SYS;
+    REG_TM0CNT = 0;
 
     bgm_on = 0;
     bgm_frames = 0;
@@ -47,6 +60,12 @@ void sound_play_bgm(u8 track) {
     /* DMA1 정지 → FIFO A 리셋 → 재시작 */
     REG_DMA1CNT = 0;
     REG_SNDDSCNT |= SDS_ARESET;
+
+    /* 타이머 켜기 */
+    timer_ensure_on();
+
+    /* 채널 A 스피커 출력 켜기 */
+    REG_SNDDSCNT |= DSA_OUTPUT;
 
     REG_DMA1SAD = (u32)snd_bgm_data;
     REG_DMA1DAD = (u32)&REG_FIFO_A;
@@ -69,8 +88,10 @@ void sound_play_sfx(u8 sfx_id) {
     case SFX_GAMEOVER:
         data = snd_gameover_data;
         len = SND_GAMEOVER_LEN;
-        bgm_on = 0;        /* BGM 정지 */
+        /* BGM 정지 + 채널 A 뮤트 */
+        bgm_on = 0;
         REG_DMA1CNT = 0;
+        REG_SNDDSCNT &= ~DSA_OUTPUT;
         REG_SNDDSCNT |= SDS_ARESET;
         break;
     case SFX_BOMB:
@@ -88,6 +109,12 @@ void sound_play_sfx(u8 sfx_id) {
     /* DMA2 정지 → FIFO B 리셋 → 재시작 */
     REG_DMA2CNT = 0;
     REG_SNDDSCNT |= SDS_BRESET;
+
+    /* 타이머 켜기 */
+    timer_ensure_on();
+
+    /* 채널 B 스피커 출력 켜기 */
+    REG_SNDDSCNT |= DSB_OUTPUT;
 
     REG_DMA2SAD = (u32)data;
     REG_DMA2DAD = (u32)&REG_FIFO_B;
@@ -112,12 +139,14 @@ void sound_update(void) {
         }
     }
 
-    /* SFX 타이머: 끝나면 DMA 정지 + FIFO 리셋 */
+    /* SFX 타이머: 끝나면 DMA 정지 + 채널 뮤트 */
     if (sfx_frames_left > 0) {
         sfx_frames_left--;
         if (sfx_frames_left == 0) {
             REG_DMA2CNT = 0;
+            REG_SNDDSCNT &= ~DSB_OUTPUT;
             REG_SNDDSCNT |= SDS_BRESET;
+            timer_stop_if_idle();
         }
     }
 }
@@ -127,7 +156,11 @@ void sound_stop(void) {
     sfx_frames_left = 0;
     REG_DMA1CNT = 0;
     REG_DMA2CNT = 0;
+    /* 양 채널 스피커 끄기 + FIFO 리셋 */
+    REG_SNDDSCNT &= ~(DSA_OUTPUT | DSB_OUTPUT);
     REG_SNDDSCNT |= SDS_ARESET | SDS_BRESET;
+    /* 타이머 정지 */
+    REG_TM0CNT = 0;
 }
 
 #else
