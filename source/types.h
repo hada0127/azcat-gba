@@ -24,7 +24,7 @@
 #define PLAYER_INIT_X       FP(104)  /* (SCREEN_W - 32) / 2 */
 #define PLAYER_X_MIN        FP(0)
 #define PLAYER_X_MAX        FP(214)  /* SCREEN_W - 26 (affine 2/3 시각 폭) */
-#define PLAYER_BASE_SPEED   FP_FROM_FLOAT_CONST(1.0f)    /* FP(5)/5 */
+#define PLAYER_BASE_SPEED   FP_FROM_FLOAT_CONST(1.15f)   /* 이동속도 소폭 상향 */
 #define PLAYER_ACCEL_INC    FP_FROM_FLOAT_CONST(0.04f)   /* 0.2/5 */
 #define PLAYER_ACCEL_MAX    4
 #define PLAYER_LIFE_MAX     3
