@@ -61,6 +61,7 @@ int main(void) {
             if (prev_state != STATE_TITLE) {
                 render_set_title_bg();
                 render_hide_all();
+                render_title_hud(gs.hiscore);
                 prev_state = STATE_TITLE;
             }
             render_oam_update();
