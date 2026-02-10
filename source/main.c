@@ -87,6 +87,7 @@ int main(void) {
             if (!paused) {
                 u8 prev_life = gs.player.life;
                 u8 prev_bomb_timer = gs.bomb.timer;
+                s16 prev_hiscore = gs.hiscore;
 
                 u8 collected = game_play_update(&gs, kd, kp);
 
@@ -121,7 +122,7 @@ int main(void) {
                 if (gs.state == STATE_GAMEOVER) {
                     paused = 0;
                     render_pause_hide();
-                    gameover_init(&go_result, gs.score, gs.hiscore);
+                    gameover_init(&go_result, gs.score, prev_hiscore);
                     if (go_result.new_hiscore) {
                         save_prepare(&save, gs.hiscore);
                         save_write(&save);
