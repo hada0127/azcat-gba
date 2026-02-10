@@ -1,8 +1,8 @@
 #ifndef SND_BGM_H
 #define SND_BGM_H
 
-/* BGM (루프) - 367644 bytes, 8192Hz 8-bit signed PCM */
-#define SND_BGM_LEN 367644
+/* BGM (루프) - 471776 bytes, 10512Hz 8-bit signed PCM */
+#define SND_BGM_LEN 471776
 extern const unsigned int snd_bgm_data[];
 
 #endif /* SND_BGM_H */

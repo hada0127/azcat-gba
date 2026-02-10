@@ -11,29 +11,23 @@
 #include "snd_gameover.h"
 
 /*
- * 더블 버퍼 오디오 시스템
+ * 연속 더블 버퍼 오디오 시스템 (Deku 방식)
  *
- * 타이머 주기 = 65536 - 0xF800 = 2048 CPU cycles
- * VBlank 주기 = 228 × 308 × 4 = 280896 CPU cycles
- * 프레임당 샘플 = 280896 / 2048 = 137.15625 = 137 + 5/32
+ * 10512Hz = 280896 cycles / 1596 timer_period
+ * 타이머값 = 65536 - 1596 = 63940
+ * 버퍼크기 = 280896 / 1596 = 176 (정확히 나눠떨어짐!)
  *
- * 분수 누적으로 137/138 교대 배분하여 드리프트 없이 정확한 재생.
- * 버퍼는 BUF_SIZE(144)로 실제 소비량보다 약간 크게 잡아
- * DMA가 타이밍 오차로 1~2 샘플 더 읽어도 유효 데이터를 읽도록 함.
+ * 두 버퍼가 메모리상 연속 배치 → DMA가 buf[0]→buf[1] 자연스럽게 흐름.
+ * DMA 리스타트는 2프레임에 1번만 → 클릭/팝 최소화.
  */
 
-#define TIMER_VAL      0xF800
+#define TIMER_10512HZ  63940
+#define BUF_SIZE       176
 
-#define SPF_WHOLE      137   /* 프레임당 샘플 정수부 */
-#define SPF_FRAC_NUM   5     /* 분수부 분자 (5/32) */
-#define SPF_FRAC_DEN   32    /* 분수부 분모 */
-#define BUF_SIZE       144   /* 버퍼 크기: 138 + 여유, 16의 배수 */
-
-/* 더블 버퍼 */
-static s8 buf_a[2][BUF_SIZE] ALIGN(4);
-static s8 buf_b[2][BUF_SIZE] ALIGN(4);
-static u8 cur_buf;
-static u8 frac_acc;
+/* 연속 더블 버퍼: buf[0..175] = A, buf[176..351] = B */
+static s8 mix_a[BUF_SIZE * 2] ALIGN(4);   /* BGM 채널 */
+static s8 mix_b[BUF_SIZE * 2] ALIGN(4);   /* SFX 채널 */
+static u8 active_buf;  /* 현재 DMA가 읽는 버퍼 (0 or 1) */
 
 /* BGM 상태 */
 static const s8 *bgm_src;
@@ -46,6 +40,39 @@ static const s8 *sfx_src;
 static u32 sfx_pos;
 static u32 sfx_len;
 
+/* 믹서: dst에 BUF_SIZE 샘플 채우기 */
+static void fill_bgm(s8 *dst) {
+    if (!bgm_on) {
+        memset(dst, 0, BUF_SIZE);
+        return;
+    }
+    u32 left = bgm_len - bgm_pos;
+    if (left >= BUF_SIZE) {
+        memcpy(dst, bgm_src + bgm_pos, BUF_SIZE);
+        bgm_pos += BUF_SIZE;
+    } else {
+        /* 루프: 끝 + 처음 이어 복사 */
+        memcpy(dst, bgm_src + bgm_pos, left);
+        memcpy(dst + left, bgm_src, BUF_SIZE - left);
+        bgm_pos = BUF_SIZE - left;
+    }
+}
+
+static void fill_sfx(s8 *dst) {
+    if (sfx_len == 0) {
+        memset(dst, 0, BUF_SIZE);
+        return;
+    }
+    u32 left = sfx_len - sfx_pos;
+    u32 n = (left < BUF_SIZE) ? left : BUF_SIZE;
+    memcpy(dst, sfx_src + sfx_pos, n);
+    if (n < BUF_SIZE)
+        memset(dst + n, 0, BUF_SIZE - n);
+    sfx_pos += n;
+    if (sfx_pos >= sfx_len)
+        sfx_len = 0;
+}
+
 void sound_init(void) {
     REG_SNDSTAT = SSTAT_ENABLE;
 
@@ -53,21 +80,20 @@ void sound_init(void) {
                  | SDS_AL | SDS_AR | SDS_BL | SDS_BR
                  | SDS_ATMR0 | SDS_BTMR0;
 
-    REG_TM0D = TIMER_VAL;
+    REG_TM0D = TIMER_10512HZ;
     REG_TM0CNT = TM_ENABLE | TM_FREQ_SYS;
 
-    memset(buf_a, 0, sizeof(buf_a));
-    memset(buf_b, 0, sizeof(buf_b));
-    cur_buf = 0;
-    frac_acc = 0;
+    memset(mix_a, 0, sizeof(mix_a));
+    memset(mix_b, 0, sizeof(mix_b));
+    active_buf = 0;
 
-    /* 무음 버퍼로 DMA 시작 */
-    REG_DMA1SAD = (u32)buf_a[0];
+    /* DMA: 연속 버퍼 시작 */
+    REG_DMA1SAD = (u32)mix_a;
     REG_DMA1DAD = (u32)&REG_FIFO_A;
     REG_DMA1CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
                 | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
 
-    REG_DMA2SAD = (u32)buf_b[0];
+    REG_DMA2SAD = (u32)mix_b;
     REG_DMA2DAD = (u32)&REG_FIFO_B;
     REG_DMA2CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
                 | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
@@ -113,65 +139,39 @@ void sound_play_sfx(u8 sfx_id) {
 }
 
 void sound_update(void) {
-    /* 이번 프레임 소비 샘플 수 계산 (분수 누적) */
-    u32 spf = SPF_WHOLE;
-    frac_acc += SPF_FRAC_NUM;
-    if (frac_acc >= SPF_FRAC_DEN) {
-        frac_acc -= SPF_FRAC_DEN;
-        spf++;
-    }
-
-    u8 next = cur_buf ^ 1;
-
-    /* ── BGM 버퍼 채우기 ── */
-    if (bgm_on) {
+    if (active_buf == 1) {
         /*
-         * BUF_SIZE 샘플을 복사 (DMA 안전 마진 확보)
-         * 위치는 spf만큼만 전진 (실제 재생량에 맞춤)
+         * DMA가 buf[1]을 읽는 중 → buf[0]을 채움.
+         * VBlank에서 DMA를 처음으로 되감기.
          */
-        u32 left = bgm_len - bgm_pos;
-        if (left >= BUF_SIZE) {
-            memcpy(buf_a[next], bgm_src + bgm_pos, BUF_SIZE);
-        } else {
-            /* 루프 경계: 끝부분 + 처음부터 이어 복사 */
-            memcpy(buf_a[next], bgm_src + bgm_pos, left);
-            memcpy(buf_a[next] + left, bgm_src, BUF_SIZE - left);
-        }
-        bgm_pos += spf;
-        if (bgm_pos >= bgm_len)
-            bgm_pos -= bgm_len;
+        fill_bgm(mix_a);
+        fill_sfx(mix_b);
+
+        /* DMA 리스타트: 버퍼 시작으로 */
+        REG_DMA1CNT = 0;
+        REG_DMA1SAD = (u32)mix_a;
+        REG_DMA1DAD = (u32)&REG_FIFO_A;
+        REG_DMA1CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
+                    | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
+
+        REG_DMA2CNT = 0;
+        REG_DMA2SAD = (u32)mix_b;
+        REG_DMA2DAD = (u32)&REG_FIFO_B;
+        REG_DMA2CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
+                    | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
+
+        active_buf = 0;
     } else {
-        memset(buf_a[next], 0, BUF_SIZE);
+        /*
+         * DMA가 buf[0]을 읽는 중 → buf[1]을 채움.
+         * DMA는 자연스럽게 buf[1]로 흘러감 (연속 메모리).
+         * DMA 리스타트 불필요!
+         */
+        fill_bgm(mix_a + BUF_SIZE);
+        fill_sfx(mix_b + BUF_SIZE);
+
+        active_buf = 1;
     }
-
-    /* ── SFX 버퍼 채우기 ── */
-    if (sfx_len > 0) {
-        u32 left = sfx_len - sfx_pos;
-        u32 n = (left < BUF_SIZE) ? left : BUF_SIZE;
-        memcpy(buf_b[next], sfx_src + sfx_pos, n);
-        if (n < BUF_SIZE)
-            memset(buf_b[next] + n, 0, BUF_SIZE - n);
-        sfx_pos += spf;
-        if (sfx_pos >= sfx_len)
-            sfx_len = 0;
-    } else {
-        memset(buf_b[next], 0, BUF_SIZE);
-    }
-
-    /* ── DMA 스왑 ── */
-    REG_DMA1CNT = 0;
-    REG_DMA1SAD = (u32)buf_a[next];
-    REG_DMA1DAD = (u32)&REG_FIFO_A;
-    REG_DMA1CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
-                | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
-
-    REG_DMA2CNT = 0;
-    REG_DMA2SAD = (u32)buf_b[next];
-    REG_DMA2DAD = (u32)&REG_FIFO_B;
-    REG_DMA2CNT = DMA_DST_FIXED | DMA_SRC_INC | DMA_REPEAT
-                | DMA_32 | DMA_AT_FIFO | DMA_ENABLE;
-
-    cur_buf = next;
 }
 
 void sound_stop(void) {

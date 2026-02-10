@@ -1,7 +1,10 @@
 """
 MP3 → 8-bit signed PCM → C 배열 변환
-ffmpeg 직접 호출: 8192Hz mono 8-bit signed PCM
+ffmpeg 직접 호출: 10512Hz mono 8-bit signed PCM
 출력: data/snd_*.c + data/snd_*.h
+
+10512Hz = 280896(VBlank cycles) / 176(buf) × 60 에서
+정확히 프레임과 동기화되는 주파수.
 """
 import os
 import struct
@@ -13,7 +16,7 @@ DATA = os.path.join(os.path.dirname(__file__), '..', 'data')
 
 os.makedirs(DATA, exist_ok=True)
 
-SAMPLE_RATE = 8192
+SAMPLE_RATE = 10512
 
 # ffmpeg 경로 (winget 설치 위치)
 FFMPEG_PATHS = [
@@ -62,8 +65,8 @@ def mp3_to_signed8(ffmpeg, path, sample_rate):
         print(f'ffmpeg error: {result.stderr.decode("utf-8", errors="replace")}')
         sys.exit(1)
     data = result.stdout
-    # 4바이트 정렬 (DMA 전송 단위)
-    pad = (4 - len(data) % 4) % 4
+    # 16바이트 정렬 (DMA FIFO 전송 단위)
+    pad = (16 - len(data) % 16) % 16
     data += b'\x00' * pad
     return data
 
