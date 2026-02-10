@@ -1,10 +1,10 @@
 # azcat-gba
 
-**Ah! Cat's manga daioh!** (아! 고양이를 피해라 대왕) — a Game Boy Advance port of a 2003 GP32 game.
+**Ah! Cat's manga daioh!** (아! 고양이를 피해라 대왕) — a Game Boy Advance port of a 2003 Flash game.
 
 ## About
 
-Back in 2003, this game was originally made for the **GP32** handheld as a fan game inspired by **Azumanga Daioh** (아즈망가 대왕). Players dodge cats raining from the sky in an increasingly frantic avoidance game.
+Back in 2003, this game was originally made as a **Flash game** (GP32/PC) inspired by **Azumanga Daioh** (아즈망가 대왕). Players dodge cats raining from the sky in an increasingly frantic avoidance game.
 
 In 2026, it has been rebuilt from scratch in C for the **Game Boy Advance**, faithfully recreating the original gameplay on real GBA hardware using devkitARM and libtonc.
 
@@ -18,18 +18,11 @@ Dodge the cats falling from the sky. Each cat that lands on the ground scores yo
 
 | Button | Action |
 |--------|--------|
-| D-Pad Left | Move left |
-| D-Pad Right | Move right |
+| D-Pad Left/Right | Move |
 | R Button | Use bomb (if available) |
-| START | Start game (title screen) |
-
-
-### Game Over Navigation
-
-| Button | Action |
-|--------|--------|
-| B Button | Return to title |
-| A Button | Retry |
+| START | Start game / Pause |
+| A Button | Start game / Retry |
+| B Button | Return to title (game over) |
 
 ### Items
 
@@ -38,7 +31,7 @@ Four types of items fall from the sky during gameplay:
 | Item | Effect |
 |------|--------|
 | Health | Restores 1 HP (max 3). Bonus +5 score if already full. |
-| Bomb | Grants a bomb. Press L to wipe all cats off screen. |
+| Bomb | Grants a bomb. Press R to wipe all falling cats off screen. |
 | Poison | Reduces 1 HP (won't kill you). -5 score if at minimum. |
 | Speed Up | Increases movement speed. Bonus +5 score if maxed out. |
 
@@ -51,7 +44,7 @@ You start with 3 lives. The character portrait in the top-right corner reflects 
 The game gets harder as your score increases:
 
 - More cats spawn simultaneously (up to 33 active at once)
-- Cats fall faster
+- Cats fall faster (13 acceleration tiers)
 - The background shifts from **day** to **night** (500+) to **matrix** (900+)
 
 ### Ranking System
@@ -82,13 +75,14 @@ Use any GBA emulator (e.g., [mGBA](https://mgba.io/)) or flash to a GBA cartridg
 - **Platform**: GBA (ARM7TDMI, 240x160)
 - **Graphics**: Mode 4 double-buffered bitmap backgrounds + OAM hardware sprites
 - **Sprites**: 46 OAM slots (33 cats + player + items + HUD + effects)
+- **Audio**: Direct Sound double-buffered DMA (10512 Hz, BGM + 4 SFX channels)
 - **Math**: Fixed-point arithmetic (.8 shift)
 - **Save**: SRAM high score persistence
 - **Language**: C (devkitARM + libtonc)
 
 ## Credits
 
-- **Original Game** (2003, GP32): hada0127(taRu)
+- **Original Game** (2003, Flash/GP32): hada0127(taRu)
 - **GBA Port** (2026): hada0127(taRu)
 
 ## License
