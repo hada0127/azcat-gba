@@ -26,6 +26,7 @@
 #include "font_numbers.h"
 #include "spr_hud_heart.h"
 #include "spr_hud_bomb.h"
+#include "spr_highscore_text.h"
 #include "grade_images.h"
 #include "nav_text.h"
 
@@ -68,6 +69,7 @@ void render_init(void) {
     memcpy32(&tile_mem[5][384], font_numbersTiles,     font_numbersTilesLen / 4);     /* 896: 40타일 16x16 */
     memcpy32(&tile_mem[5][424], spr_hud_heartTiles,   spr_hud_heartTilesLen / 4);    /* 936: 4타일 16x16 */
     memcpy32(&tile_mem[5][428], spr_hud_bombTiles,    spr_hud_bombTilesLen / 4);     /* 940: 4타일 16x16 */
+    memcpy32(&tile_mem[5][432], spr_highscore_textTiles, spr_highscore_textTilesLen / 4); /* 944: 32타일 64x32 */
 
     /* OBJ 팔레트 로드 (walk0 팔레트 = 공유 팔레트) */
     memcpy16(pal_obj_bank[PB_PLAYER],      spr_player_walk0Pal, spr_player_walk0PalLen / 2);
@@ -82,6 +84,7 @@ void render_init(void) {
     memcpy16(pal_obj_bank[PB_FONT],        font_numbersPal,    font_numbersPalLen / 2);
     memcpy16(pal_obj_bank[PB_HUD_HEART],   spr_hud_heartPal,   spr_hud_heartPalLen / 2);
     memcpy16(pal_obj_bank[PB_HUD_BOMB],    spr_hud_bombPal,    spr_hud_bombPalLen / 2);
+    memcpy16(pal_obj_bank[PB_HISCORE_TXT], spr_highscore_textPal, spr_highscore_textPalLen / 2);
 }
 
 /* ── 배경 전환 (양쪽 페이지에 복사) ── */
@@ -282,11 +285,19 @@ void render_hud(const GameState* gs) {
 /* ── 타이틀 HUD (하이스코어 표시) ── */
 void render_title_hud(s16 hiscore) {
     int i;
-    /* 하이스코어 숫자를 화면 중앙 하단에 표시 */
-    render_digits(hiscore, OAM_SCORE_START, (SCREEN_W - 40) / 2, SCREEN_H - 16);
 
-    /* 나머지 HUD 슬롯 숨기기 */
-    for (i = 0; i < OAM_HEART_COUNT; i++)
+    /* "High Score" 텍스트 (64x32 WIDE, 하트 슬롯 0 재활용) */
+    obj_set_attr(&obj_buffer[OAM_HEART_START],
+        ATTR0_WIDE | ATTR0_4BPP,
+        ATTR1_SIZE_64,
+        ATTR2_PALBANK(PB_HISCORE_TXT) | ATTR2_ID(TID_HISCORE_TXT));
+    obj_set_pos(&obj_buffer[OAM_HEART_START], TITLE_HS_TEXT_X, TITLE_HS_TEXT_Y);
+
+    /* 하이스코어 숫자 (텍스트 아래, 좌측 정렬) */
+    render_digits(hiscore, OAM_SCORE_START, TITLE_HS_NUM_X, TITLE_HS_NUM_Y);
+
+    /* 사용하지 않는 HUD 슬롯 숨기기 */
+    for (i = 1; i < OAM_HEART_COUNT; i++)
         obj_hide(&obj_buffer[OAM_HEART_START + i]);
     obj_hide(&obj_buffer[OAM_HUD_BOMB]);
 }

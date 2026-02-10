@@ -37,6 +37,7 @@
 #define TID_FONT        896  /* 0~9 숫자 (4타일x10=40타일, 16x16) */
 #define TID_HUD_HEART   936  /* 4타일 16x16 (하트 HUD) */
 #define TID_HUD_BOMB    940  /* 4타일 16x16 (폭탄 HUD) */
+#define TID_HISCORE_TXT 944  /* 32타일 64x32 (High Score 텍스트) */
 
 /* ── OBJ 팔레트 뱅크 ── */
 #define PB_PLAYER       0
@@ -50,6 +51,7 @@
 #define PB_EXPLOSION    8
 #define PB_HUD_HEART    9
 #define PB_HUD_BOMB     10
+#define PB_HISCORE_TXT  11
 #define PB_FONT         13
 
 /* 배경 타입 상수 (title 추가) */
@@ -82,6 +84,12 @@
 #define HUD_SCORE_X     88  /* 중앙 (240-5*12-4)/2 */
 #define HUD_SCORE_Y     0   /* 상단 */
 #define HUD_DIGIT_SPACE 12  /* 16x16 숫자 간격 */
+
+/* 타이틀 HUD 좌표 */
+#define TITLE_HS_TEXT_X  2   /* High Score 텍스트 X */
+#define TITLE_HS_TEXT_Y  2   /* High Score 텍스트 Y */
+#define TITLE_HS_NUM_X   4   /* 하이스코어 숫자 X */
+#define TITLE_HS_NUM_Y   16  /* 하이스코어 숫자 Y (텍스트 아래) */
 
 void render_init(void);
 void render_set_bg(u8 bg_type);
