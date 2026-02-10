@@ -43,7 +43,7 @@ You start with 3 lives, shown as hearts at the top-left corner. The score is dis
 
 The game gets harder as your score increases:
 
-- More cats spawn simultaneously (up to 33 active at once)
+- More cats spawn simultaneously (up to 48 active at once)
 - Cats fall faster (13 acceleration tiers)
 - The background shifts from **day** to **night** (500+) to **matrix** (900+)
 
@@ -74,7 +74,7 @@ Use any GBA emulator (e.g., [mGBA](https://mgba.io/)) or flash to a GBA cartridg
 
 - **Platform**: GBA (ARM7TDMI, 240x160)
 - **Graphics**: Mode 4 double-buffered bitmap backgrounds + OAM hardware sprites
-- **Sprites**: 46 OAM slots (33 cats + player + items + HUD + effects)
+- **Sprites**: 64 OAM slots (48 cats + player + items + HUD + effects)
 - **Audio**: Direct Sound double-buffered DMA (10512 Hz, BGM + 4 SFX channels)
 - **Math**: Fixed-point arithmetic (.8 shift)
 - **Save**: SRAM high score persistence

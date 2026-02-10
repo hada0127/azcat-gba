@@ -16,10 +16,10 @@
 #define OAM_HIT_START   9   /* 9-12: 충돌 이펙트 (최대 4개) */
 #define OAM_HIT_COUNT   4
 #define OAM_ITEM        13
-#define OAM_CAT_START   14  /* 14-46: 고양이 33마리 */
-#define OAM_PLAYER      47
-#define OAM_PAUSE       52  /* PAUSE 텍스트 */
-#define OAM_COUNT       48
+#define OAM_CAT_START   14  /* 14-61: 고양이 48마리 */
+#define OAM_PLAYER      62
+#define OAM_PAUSE       63  /* PAUSE 텍스트 */
+#define OAM_COUNT       64
 
 /* ── OBJ 타일 ID (Mode 4: 512부터) ── */
 /* 원본 스프라이트 사이즈: 스케일링 없이 OAM 캔버스에 패딩 */

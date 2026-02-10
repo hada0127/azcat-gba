@@ -31,7 +31,7 @@
 #define PLAYER_LIFE_INIT    3
 
 /* ── 고양이 ── */
-#define MAX_CATS            33
+#define MAX_CATS            48
 #define CAT_SPAWN_X_MIN     1
 #define CAT_SPAWN_X_MAX     214  /* SCREEN_W - 26 (affine 2/3) */
 #define CAT_SPAWN_Y_MIN     (-120)
