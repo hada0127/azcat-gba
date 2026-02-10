@@ -72,6 +72,7 @@ u8 cats_update(Cat cats[], u16 score, s32 player_x,
             cats[i].v_accel++;
             if (cats[i].v_accel >= CAT_SIT_FRAMES) {
                 cats[i].state = CAT_STATE_EXIT;
+                cats[i].y += CAT_EXIT_Y_OFFSET;  /* 스프라이트 전환 시 위로 튀는 현상 보정 */
                 cats[i].v_accel = 0;
             }
         } else if (cats[i].state == CAT_STATE_EXIT) {

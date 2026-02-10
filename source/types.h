@@ -41,6 +41,7 @@
 #define CAT_HIT_Y_MAX       FP(131)  /* = CAT_LAND_Y */
 #define CAT_GRAVITY         FP_FROM_FLOAT_CONST(0.04f)   /* 0.2/5 */
 #define CAT_BASE_FALL       FP_FROM_FLOAT_CONST(0.08f)   /* 0.4/5 */
+#define CAT_EXIT_Y_OFFSET   FP(6)   /* SIT→EXIT 스프라이트 전환 시 Y 보정 */
 #define CAT_SIT_FRAMES      15  /* 착지 체류 프레임 (0.25초@60fps) */
 #define CAT_HIT_FRAMES      15  /* 충돌 이펙트 지속 프레임 */
 
