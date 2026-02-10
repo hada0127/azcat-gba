@@ -50,6 +50,18 @@ void render_init(void) {
         oa[AFFINE_IDX_FLIP].pb = 0;
         oa[AFFINE_IDX_FLIP].pc = 0;
         oa[AFFINE_IDX_FLIP].pd = AFFINE_SCALE;
+
+        /* EXIT 확대 애니메이션 affine (4단계: 384→320 점진적 확대) */
+        {
+            static const s16 exit_scales[] = {372, 356, 340, 320};
+            int j;
+            for (j = 0; j < AFFINE_EXIT_STEPS; j++) {
+                oa[AFFINE_IDX_EXIT_BASE + j].pa = exit_scales[j];
+                oa[AFFINE_IDX_EXIT_BASE + j].pb = 0;
+                oa[AFFINE_IDX_EXIT_BASE + j].pc = 0;
+                oa[AFFINE_IDX_EXIT_BASE + j].pd = exit_scales[j];
+            }
+        }
     }
 
     /* Mode 4에서 OBJ 타일은 tile_mem[5] (ID 512~)부터 안전 */
@@ -192,9 +204,16 @@ void render_sprites(const GameState* gs) {
             int cy = FP_TO_INT(gs->cats[i].y);
             u16 tid = (i & 1) ? TID_CAT_BROWN : TID_CAT_WHITE;
             u16 pb  = (i & 1) ? PB_CAT_BROWN  : PB_CAT_WHITE;
+            u16 aff_idx = AFFINE_IDX;
+            if (gs->cats[i].state == CAT_STATE_EXIT) {
+                /* 확대 애니메이션: exit_anim 값으로 affine 단계 선택 */
+                int step = gs->cats[i].exit_anim * AFFINE_EXIT_STEPS / CAT_EXIT_ANIM_LEN;
+                if (step >= AFFINE_EXIT_STEPS) step = AFFINE_EXIT_STEPS - 1;
+                aff_idx = AFFINE_IDX_EXIT_BASE + step;
+            }
             obj_set_attr(&obj_buffer[oam],
                 ATTR0_SQUARE | ATTR0_4BPP | ATTR0_AFF,
-                ATTR1_SIZE_32 | ATTR1_AFF_ID(AFFINE_IDX),
+                ATTR1_SIZE_32 | ATTR1_AFF_ID(aff_idx),
                 ATTR2_PALBANK(pb) | ATTR2_ID(tid));
             obj_set_pos(&obj_buffer[oam], cx, cy);
         } else if (gs->cats[i].state == CAT_STATE_HIT) {

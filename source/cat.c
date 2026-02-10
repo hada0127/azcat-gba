@@ -10,6 +10,7 @@ void cats_init(Cat cats[]) {
         cats[i].y = FP(200); /* 화면 밖 */
         cats[i].v_accel = 0;
         cats[i].state = CAT_STATE_INACTIVE;
+        cats[i].exit_anim = 0;
     }
 }
 
@@ -74,8 +75,12 @@ u8 cats_update(Cat cats[], u16 score, s32 player_x,
                 cats[i].state = CAT_STATE_EXIT;
                 cats[i].y += CAT_EXIT_Y_OFFSET;  /* 스프라이트 전환 시 위로 튀는 현상 보정 */
                 cats[i].v_accel = 0;
+                cats[i].exit_anim = 0;
             }
         } else if (cats[i].state == CAT_STATE_EXIT) {
+            /* 확대 애니메이션 카운터 */
+            if (cats[i].exit_anim < CAT_EXIT_ANIM_LEN)
+                cats[i].exit_anim++;
             /* 아래로 퇴장 */
             cats[i].y += CAT_BASE_FALL + cats[i].v_accel;
             cats[i].v_accel += CAT_GRAVITY;

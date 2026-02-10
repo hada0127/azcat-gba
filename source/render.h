@@ -76,6 +76,8 @@
 #define AFFINE_SCALE    384  /* 3/2 in .8 fixed = 2/3 display size */
 #define AFFINE_IDX      0    /* 게임 스프라이트 공용 affine 매트릭스 인덱스 */
 #define AFFINE_IDX_FLIP 1    /* 좌우반전 affine (HFLIP 대체) */
+#define AFFINE_IDX_EXIT_BASE  2    /* EXIT 확대 affine 시작 인덱스 */
+#define AFFINE_EXIT_STEPS     4    /* 확대 단계 수 (인덱스 2~5) */
 
 /* HUD 좌표 */
 #define HUD_HEART_X      2   /* 하트 시작 X (좌측 2px 여백) */
