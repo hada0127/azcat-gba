@@ -8,6 +8,10 @@ Back in 2003, this game was originally made for the **GP32** handheld as a fan g
 
 In 2026, it has been rebuilt from scratch in C for the **Game Boy Advance**, faithfully recreating the original gameplay on real GBA hardware using devkitARM and libtonc.
 
+## Screenshots
+
+![Title](screenshots/title.png) ![In-Game](screenshots/ingame.png) ![Game Over](screenshots/gameover.png)
+
 ## How to Play
 
 ### Objective
