@@ -85,11 +85,11 @@
 #define HUD_SCORE_Y     0   /* 상단 */
 #define HUD_DIGIT_SPACE 12  /* 16x16 숫자 간격 */
 
-/* 타이틀 HUD 좌표 */
-#define TITLE_HS_TEXT_X  2   /* High Score 텍스트 X */
-#define TITLE_HS_TEXT_Y  2   /* High Score 텍스트 Y */
-#define TITLE_HS_NUM_X   4   /* 하이스코어 숫자 X */
-#define TITLE_HS_NUM_Y   16  /* 하이스코어 숫자 Y (텍스트 아래) */
+/* 타이틀 HUD 좌표 (한 줄 배치) */
+#define TITLE_HS_TEXT_X  1   /* High Score 텍스트 X */
+#define TITLE_HS_TEXT_Y  0   /* High Score 텍스트 Y */
+#define TITLE_HS_NUM_X   46  /* 하이스코어 숫자 X (텍스트 옆) */
+#define TITLE_HS_NUM_Y   0   /* 하이스코어 숫자 Y (같은 줄) */
 
 void render_init(void);
 void render_set_bg(u8 bg_type);
