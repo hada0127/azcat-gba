@@ -32,7 +32,8 @@ git push
 규칙:
 - 커밋 메시지는 한글, 간결하게 (예: "고양이 낙하 시스템 구현")
 - `git add`는 변경 파일만 명시적으로 (git add -A 금지)
-- .gba, .elf, .o, .d, .map, build/ 등 빌드 산출물은 절대 커밋하지 않음
+- .gba 파일은 빌드 후 항상 함께 커밋
+- .elf, .o, .d, .map, build/ 등 기타 빌드 산출물은 절대 커밋하지 않음
 - push 실패 시(remote 없음 등) 무시하고 진행
 - 단순 조사/질문 응답처럼 파일 변경이 없는 경우는 커밋하지 않음
 
@@ -45,7 +46,7 @@ azcat-gba/
 ├── data/          # grit 변환된 에셋 (.c/.h)
 ├── include/       # 공통 헤더, 상수 정의
 ├── Makefile
-└── azcat.gba      # ROM 출력 (gitignore)
+└── azcat.gba      # ROM 출력 (커밋 대상)
 ```
 
 ## 참조 문서
