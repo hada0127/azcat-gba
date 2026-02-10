@@ -251,8 +251,7 @@ def convert_grade_images():
 
     all_data = []
     for gi in range(GRADE_COUNT):
-        img_num = 123 - gi * 2
-        src_path = os.path.join(SRC, f'{img_num}.png')
+        src_path = os.path.join(GFX, f'grade_{gi:02d}.png')
         im = Image.open(src_path).convert('RGBA')
 
         # IMG_W x IMG_H 캔버스에 패딩 (원본 71x15 → 72x15)
@@ -269,7 +268,7 @@ def convert_grade_images():
             else:
                 pixels.append(2)  # 팔레트 1 = 검정
         all_data.append(pixels)
-        print(f"  GRADE: {img_num}.png -> index {gi}")
+        print(f"  GRADE: grade_{gi:02d}.png -> index {gi}")
 
     # C 헤더 출력
     lines = []
@@ -291,7 +290,7 @@ def convert_grade_images():
     lines.append(f'/* 등급 이미지 {GRADE_COUNT}개, {IMG_W}x{IMG_H} (0=투명, 1=흰색, 2=검정) */')
     lines.append(f'static const unsigned char grade_image_data[{GRADE_COUNT}][{IMG_W * IMG_H}] = {{')
     for gi in range(GRADE_COUNT):
-        lines.append(f'    {{ /* grade {gi} (img {123-gi*2}) */')
+        lines.append(f'    {{ /* grade {gi} (grade_{gi:02d}.png) */')
         data = all_data[gi]
         for row in range(IMG_H):
             start = row * IMG_W
