@@ -14,7 +14,19 @@
 - **타겟**: GBA (ARM7TDMI, 240x160, Mode 4)
 - **에셋 변환**: grit
 - **테스트**: mGBA 에뮬레이터
-- **빌드**: `make`
+- **빌드**: `make` (아래 빌드 명령어 참조)
+
+## 빌드 명령어
+
+Windows 환경에서 devkitPro msys2 셸을 통해 빌드. 반드시 아래 명령어 사용:
+
+```bash
+/c/devkitPro/msys2/usr/bin/bash.exe -c "export DEVKITARM=/opt/devkitpro/devkitARM; export DEVKITPRO=/opt/devkitpro; export PATH=/opt/devkitpro/msys2/usr/bin:/opt/devkitpro/devkitARM/bin:/opt/devkitpro/tools/bin:\$PATH; export TEMP=/tmp; export TMP=/tmp; export TMPDIR=/tmp; cd /c/Users/taro1/Downloads/azcat; make 2>&1"
+```
+
+- 클린 빌드 시 `make clean 2>&1;` 를 `make 2>&1` 앞에 추가
+- `TEMP=/tmp` 필수 (없으면 C:\WINDOWS\ 권한 오류)
+- devkitPro 경로: `C:\devkitPro` (msys2 내에서는 `/opt/devkitpro`)
 
 ## Git 워크플로우 (필수)
 

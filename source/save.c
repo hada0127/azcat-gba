@@ -1,6 +1,11 @@
 #include "save.h"
 #include <string.h>
 
+#ifdef PLATFORM_GBA
+/* SRAM 식별 문자열 — 에뮬레이터가 ROM에서 이 패턴을 찾아 save type 자동 감지 */
+const char sram_id[] = "SRAM_Vnnn";
+#endif
+
 u16 save_compute_checksum(const SaveData* sd) {
     /* magic의 상위/하위 16비트 XOR + hiscore */
     u16 hi = (u16)(sd->magic >> 16);

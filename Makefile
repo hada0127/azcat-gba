@@ -26,7 +26,7 @@ CFLAGS	:=	-g -Wall -O2 -DPLATFORM_GBA \
 CFLAGS	+=	$(INCLUDE)
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-g $(ARCH) -Wl,-Map,$(notdir $*.map)
+LDFLAGS	=	-g $(ARCH) -Wl,-Map,$(notdir $*.map) -Wl,-u,sram_id
 
 #---------------------------------------------------------------------------------
 LIBS	:= -ltonc
