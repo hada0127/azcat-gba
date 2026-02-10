@@ -39,8 +39,8 @@
 #define CAT_LAND_Y          FP(131)  /* 바닥=157, OAM bottom=131+26=157 */
 #define CAT_HIT_Y_MIN       FP(108)  /* 충돌 시작 Y를 아래로 */
 #define CAT_HIT_Y_MAX       FP(131)  /* = CAT_LAND_Y */
-#define CAT_GRAVITY         FP_FROM_FLOAT_CONST(0.028f)  /* 낙하 중력 */
-#define CAT_BASE_FALL       FP_FROM_FLOAT_CONST(0.06f)   /* 기본 낙하속도 */
+#define CAT_GRAVITY         FP_FROM_FLOAT_CONST(0.03f)   /* 낙하 중력 */
+#define CAT_BASE_FALL       FP_FROM_FLOAT_CONST(0.065f)  /* 기본 낙하속도 */
 #define CAT_EXIT_Y_OFFSET   FP(6)   /* SIT→EXIT 스프라이트 전환 시 Y 보정 */
 #define CAT_EXIT_ANIM_LEN   8   /* EXIT 확대 애니메이션 프레임 수 */
 #define CAT_SIT_FRAMES      15  /* 착지 체류 프레임 (0.25초@60fps) */

@@ -1,4 +1,4 @@
-# azcat-gba
+# azcat-gba v1.1.0
 
 **Ah! Cat's manga daioh!** (아! 고양이를 피해라 대왕) — a Game Boy Advance port of a 2003 GP32 game.
 
